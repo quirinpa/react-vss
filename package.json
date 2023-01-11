@@ -4,16 +4,18 @@
   "description": "let your components know about your app's styling preferences, use less local styles",
   "main": "build/main.js",
   "scripts": {
-    "test": "react-noscripts test",
-    "start": "react-noscripts start",
-    "build": "react-noscripts build",
-    "lint": "react-noscripts lint"
+    "test": "scripts test",
+    "build": "scripts build",
+    "watch": "scripts watch",
+    "lint": "scripts lint"
   },
   "author": "",
   "license": "BSD-2-Clause",
   "peerDependencies": {
     "react": "^16.14.0",
-    "react-dom": "^16.14.0",
-    "react-noscripts": "^0.1.119"
+    "react-dom": "^16.14.0"
+  },
+  "devDependencies": {
+    "@tty-pt/scripts": "^0.0.1-4"
   }
 }
