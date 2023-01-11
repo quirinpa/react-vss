@@ -1,0 +1,19 @@
+{
+  "name": "@tty-pt/styles",
+  "version": "0.0.1",
+  "description": "let your components know about your app's styling preferences, use less local styles",
+  "main": "build/main.js",
+  "scripts": {
+    "test": "react-noscripts test",
+    "start": "react-noscripts start",
+    "build": "react-noscripts build",
+    "lint": "react-noscripts lint"
+  },
+  "author": "",
+  "license": "BSD-2-Clause",
+  "peerDependencies": {
+    "react": "^16.14.0",
+    "react-dom": "^16.14.0",
+    "react-noscripts": "^0.1.119"
+  }
+}
