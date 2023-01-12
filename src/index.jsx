@@ -19,6 +19,7 @@ const LABELS = {
   JUSTIFY_CONTENT: "justifyContent",
   CENTER: "center",
   END: "end",
+  SPACE_BETWEEN: "spaceBetween",
   SMALL: "small",
   FLEX: "flex",
   WRAP: "wrap",
@@ -97,6 +98,9 @@ const preStyles = {
   },
   [lab("JUSTIFY_CONTENT END")]: {
     justifyContent: "flex-end",
+  },
+  [lab("JUSTIFY_CONTENT SPACE_BETWEEN")]: {
+    justifyContent: "space-between",
   },
   [lab("SIZE VERTICAL FULL")]: {
     height: "100%",
