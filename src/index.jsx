@@ -23,6 +23,8 @@ const LABELS = {
   SMALL: "small",
   FLEX: "flex",
   WRAP: "wrap",
+  PAD: "pad",
+  TABLE: "table",
 };
 
 function lab(phrase) {
@@ -69,11 +71,33 @@ const preStyles = {
     ...vertical0,
     rowGap: "8px",
   },
-  pad: {
+  [lab("PAD")]: {
     padding: "16px",
   },
-  padSmall: {
+  [lab("PAD SMALL")]: {
     padding: "8px",
+  },
+  [lab("PAD VERTICAL")]: {
+    paddingTop: "16px",
+    paddingBottom: "16px",
+  },
+  [lab("PAD VERTICAL SMALL")]: {
+    paddingTop: "8px",
+    paddingBottom: "8px",
+  },
+  [lab("PAD HORIZONTAL")]: {
+    paddingLeft: "16px",
+    paddingRight: "16px",
+  },
+  [lab("PAD HORIZONTAL SMALL")]: {
+    paddingLeft: "8px",
+    paddingRight: "8px",
+  },
+  [lab("TABLE HORIZONTAL SMALL")]: {
+    "& > td": {
+      paddingLeft: "8px",
+      paddingRight: "8px",
+    }
   },
   relative: {
     position: "relative",
