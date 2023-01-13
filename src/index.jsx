@@ -1,3 +1,21 @@
+import React, { useContext } from "react";
+import PropTypes from "prop-types";
+
+const GrimoireContext = React.createContext();
+
+export function GrimoireProvider(props) {
+  const { value, children } = props;
+
+  return (<GrimoireContext.Provider value={value}>
+    { children }
+  </GrimoireContext.Provider>);
+}
+
+GrimoireProvider.propTypes = {
+  value: PropTypes.object.isRequired,
+  children: PropTypes.node,
+};
+
 export function cast(object, phrase) {
   return phrase.split(" ").map(word => {
     const value = object[word];
@@ -7,6 +25,11 @@ export function cast(object, phrase) {
 
     return value;
   }).join(" ");
+}
+
+export function useCast() {
+  const context = useContext(CastContext);
+  return phrase => cast(context, phrase);
 }
 
 const LABELS = {
@@ -25,6 +48,8 @@ const LABELS = {
   WRAP: "wrap",
   PAD: "pad",
   TABLE: "table",
+  FONT_WEIGHT: "fontWeight",
+  BOLD: "bold",
 };
 
 function lab(phrase) {
@@ -94,7 +119,11 @@ const preStyles = {
     paddingRight: "8px",
   },
   [lab("TABLE HORIZONTAL SMALL")]: {
-    "& > td": {
+    "& th": {
+      paddingLeft: "8px",
+      paddingRight: "8px",
+    },
+    "& td": {
       paddingLeft: "8px",
       paddingRight: "8px",
     }
@@ -167,17 +196,27 @@ const preStyles = {
   },
 };
 
-export function makeInnerStyles(theme) {
+export function makeGrimoire(theme) {
   return {
     ...preStyles,
     caption: theme.typography.caption,
     h3: theme.typography.h3,
     h4: theme.typography.h4,
+    subtitle2: theme.typography.subtitle2,
+    textPrimary: {
+      color: theme.palette.text.primary,
+    },
+    textSecondary: {
+      color: theme.palette.text.secondary,
+    },
     borderLeftDivider: {
       borderLeft: "solid thin " + theme.palette.divider,
     },
     borderTopDivider: {
       borderTop: "solid thin " + theme.palette.divider,
+    },
+    [lab("FONT_WEIGHT BOLD")]: {
+      fontWeight: 600,
     },
   };
 }
