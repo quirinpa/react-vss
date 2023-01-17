@@ -28,8 +28,18 @@ export function cast(object, phrase) {
 }
 
 export function useCast() {
-  const context = useContext(CastContext);
+  const context = useContext(GrimoireContext);
   return phrase => cast(context, phrase);
+}
+
+export function withCast(Component) {
+  function CastComponent(props) {
+    return (<GrimoireContext.Consumer>
+      { value => <Component c={phrase => cast(value, phrase)} { ...props } /> }
+    </GrimoireContext.Consumer>);
+  }
+
+  return CastComponent;
 }
 
 const LABELS = {
@@ -41,6 +51,7 @@ const LABELS = {
   ALIGN_ITEMS: "alignItems",
   JUSTIFY_CONTENT: "justifyContent",
   CENTER: "center",
+  START: "start",
   END: "end",
   SPACE_BETWEEN: "spaceBetween",
   SMALL: "small",
@@ -50,6 +61,9 @@ const LABELS = {
   TABLE: "table",
   FONT_WEIGHT: "fontWeight",
   BOLD: "bold",
+  NO: "no",
+  BLOCK: "block",
+  TABLE_LAYOUT: "tableLayout",
 };
 
 function lab(phrase) {
@@ -86,6 +100,15 @@ const preStyles = {
   [lab("HORIZONTAL SMALL")]: {
     ...horizontal0,
     gap: "8px",
+  },
+  [lab("BLOCK HORIZONTAL")]: {
+    "& > *": {
+      float: "left",
+      marginLeft: "16px",
+      "&:first": {
+        marginLeft: "0px",
+      }
+    },
   },
   vertical0,
   [LABELS.VERTICAL]: {
@@ -143,6 +166,12 @@ const preStyles = {
   overflowAuto: {
     overflow: "auto",
   },
+  [lab("ALIGN_ITEMS START")]: {
+    alignItems: "flex-start",
+  },
+  [lab("ALIGN_ITEMS END")]: {
+    alignItems: "flex-end",
+  },
   [lab("ALIGN_ITEMS CENTER")]: {
     alignItems: "center",
   },
@@ -191,8 +220,16 @@ const preStyles = {
       flexGrow: 1,
     },
   },
+  verticalCenter: {
+    display: "inline-flex !important",
+    flexDirection: "column",
+    justifyContent: "center",
+  },
   [lab("FLEX WRAP")]: {
     flexWrap: "wrap",
+  },
+  [lab("TABLE_LAYOUT FIXED")]: {
+    tableLayout: "fixed",
   },
 };
 
@@ -217,6 +254,9 @@ export function makeGrimoire(theme) {
     },
     [lab("FONT_WEIGHT BOLD")]: {
       fontWeight: 600,
+    },
+    borderRadiusSmall: {
+      borderRadius: "8px",
     },
   };
 }
