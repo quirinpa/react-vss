@@ -64,6 +64,14 @@ const LABELS = {
   NO: "no",
   BLOCK: "block",
   TABLE_LAYOUT: "tableLayout",
+  FIXED: "fixed",
+  COLOR: "color",
+  BACKGROUND: "background",
+  INHERIT: "inherit",
+  ERROR: "error",
+  LIGHT: "light",
+  MARGIN: "margin",
+  LEFT: "left",
 };
 
 function lab(phrase) {
@@ -231,9 +239,18 @@ const preStyles = {
   [lab("TABLE_LAYOUT FIXED")]: {
     tableLayout: "fixed",
   },
+  [lab("COLOR INHERIT")]: {
+    color: "inherit",
+  },
+  [lab("BACKGROUND INHERIT")]: {
+    backgroundColor: "inherit",
+  },
+  [lab("MARGIN LEFT SMALL")]: {
+    marginLeft: "8px",
+  },
 };
 
-export function makeGrimoire(theme) {
+export function makeMagicBook(theme) {
   return {
     ...preStyles,
     caption: theme.typography.caption,
@@ -257,6 +274,12 @@ export function makeGrimoire(theme) {
     },
     borderRadiusSmall: {
       borderRadius: "8px",
+    },
+    [lab("COLOR ERROR")]: {
+      color: theme.palette.error.main,
+    },
+    [lab("COLOR ERROR LIGHT")]: {
+      color: theme.palette.error.light,
     },
   };
 }
