@@ -1,45 +1,55 @@
 import React, { useContext } from "react";
 import PropTypes from "prop-types";
 
-const GrimoireContext = React.createContext();
+const MagicBookContext = React.createContext();
 
-export function GrimoireProvider(props) {
-  const { value, children } = props;
+const defaultClasses = {};
 
-  return (<GrimoireContext.Provider value={value}>
-    { children }
-  </GrimoireContext.Provider>);
-}
+export function cast(object = defaultClasses, phrase) {
+  if (!phrase)
+    return "";
 
-GrimoireProvider.propTypes = {
-  value: PropTypes.object.isRequired,
-  children: PropTypes.node,
-};
-
-export function cast(object, phrase) {
   return phrase.split(" ").map(word => {
     const value = object[word];
 
     if (!value)
-      console.info("failed to cast " + word, object);
+      console.info("failed to cast " + word);
 
     return value;
   }).join(" ");
 }
 
 export function useCast() {
-  const context = useContext(GrimoireContext);
+  const context = useContext(MagicBookContext);
   return phrase => cast(context, phrase);
 }
 
 export function withCast(Component) {
   function CastComponent(props) {
-    return (<GrimoireContext.Consumer>
-      { value => <Component c={phrase => cast(value, phrase)} { ...props } /> }
-    </GrimoireContext.Consumer>);
+    const c = useCast();
+
+    return <Component c={c} { ...props } />;
   }
 
   return CastComponent;
+}
+
+export function withMagicBook(Component) {
+  function ProviderComponent(props) {
+    const { classes, ...rest } = props;
+
+    return (
+      <MagicBookContext.Provider value={classes}>
+        <Component { ...rest } />
+      </MagicBookContext.Provider>
+    );
+  }
+
+  ProviderComponent.propTypes = {
+    classes: PropTypes.objectOf(PropTypes.string),
+  };
+
+  return ProviderComponent;
 }
 
 const LABELS = {
@@ -68,10 +78,23 @@ const LABELS = {
   COLOR: "color",
   BACKGROUND: "background",
   INHERIT: "inherit",
+  SUCCESS: "success",
+  WARNING: "warning",
   ERROR: "error",
   LIGHT: "light",
   MARGIN: "margin",
+  POSITION: "position",
+  NEGATIVE: "neg",
   LEFT: "left",
+  RIGHT: "right",
+  TOP: "top",
+  ROTATE: "rotate",
+  PI: "pi",
+  OVER: "over",
+  TWO: "two",
+  OPACITY: "opacity",
+  WHITE: "white",
+  BLACK: "black",
 };
 
 function lab(phrase) {
@@ -165,6 +188,12 @@ const preStyles = {
   absolute: {
     position: "absolute",
   },
+  [lab("POSITION RIGHT NEGATIVE")]: {
+    right: "-16px",
+  },
+  [lab("POSITION TOP NEGATIVE")]: {
+    top: "-16px",
+  },
   alignSelfStretch: {
     alignSelf: "stretch",
   },
@@ -173,6 +202,9 @@ const preStyles = {
   },
   overflowAuto: {
     overflow: "auto",
+  },
+  overflowHidden: {
+    overflow: "hidden",
   },
   [lab("ALIGN_ITEMS START")]: {
     alignItems: "flex-start",
@@ -245,8 +277,26 @@ const preStyles = {
   [lab("BACKGROUND INHERIT")]: {
     backgroundColor: "inherit",
   },
+  [lab("BACKGROUND WHITE")]: {
+    backgroundColor: "white",
+  },
+  [lab("BACKGROUND BLACK")]: {
+    backgroundColor: "black",
+  },
   [lab("MARGIN LEFT SMALL")]: {
     marginLeft: "8px",
+  },
+  [lab("MARGIN") + 0]: {
+    margin: 0,
+  },
+  [lab("OPACITY") + 3]: {
+    opacity: 0.3,
+  },
+  [lab("OPACITY") + 5]: {
+    opacity: 0.5,
+  },
+  [lab("OPACITY") + 8]: {
+    opacity: 0.8,
   },
 };
 
@@ -256,12 +306,32 @@ export function makeMagicBook(theme) {
     caption: theme.typography.caption,
     h3: theme.typography.h3,
     h4: theme.typography.h4,
+    h5: theme.typography.h5,
+    h6: theme.typography.h6,
     subtitle2: theme.typography.subtitle2,
     textPrimary: {
       color: theme.palette.text.primary,
     },
     textSecondary: {
       color: theme.palette.text.secondary,
+    },
+    [lab("BACKGROUND SUCCESS")]: {
+      backgroundColor: theme.palette.success.main,
+    },
+    [lab("BACKGROUND WARNING")]: {
+      backgroundColor: theme.palette.warning.main,
+    },
+    [lab("BACKGROUND ERROR")]: {
+      backgroundColor: theme.palette.error.main,
+    },
+    [lab("BACKGROUND SUCCESS LIGHT")]: {
+      backgroundColor: theme.palette.success.light,
+    },
+    [lab("BACKGROUND WARNING LIGHT")]: {
+      backgroundColor: theme.palette.warning.light,
+    },
+    [lab("BACKGROUND ERROR LIGHT")]: {
+      backgroundColor: theme.palette.error.light,
     },
     borderLeftDivider: {
       borderLeft: "solid thin " + theme.palette.divider,
@@ -280,6 +350,9 @@ export function makeMagicBook(theme) {
     },
     [lab("COLOR ERROR LIGHT")]: {
       color: theme.palette.error.light,
+    },
+    [lab("ROTATE PI OVER TWO")]: {
+      transform: "rotate(90deg)",
     },
   };
 }

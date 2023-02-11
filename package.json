@@ -1,6 +1,6 @@
 {
   "name": "@tty-pt/styles",
-  "version": "0.0.2-29",
+  "version": "0.0.2-58",
   "description": "let your components know about your app's styling preferences, use less local styles",
   "main": "build/main.js",
   "scripts": {
@@ -17,6 +17,6 @@
     "react-dom": "^16.14.0"
   },
   "devDependencies": {
-    "@tty-pt/scripts": "^0.0.1-13"
+    "@tty-pt/scripts": "0.0.1-35"
   }
 }
