@@ -188,6 +188,18 @@ const preStyles = {
   absolute: {
     position: "absolute",
   },
+  [lab("POSITION TOP") + 0]: {
+    top: 0,
+  },
+  [lab("POSITION LEFT") + 0]: {
+    left: 0,
+  },
+  [lab("POSITION RIGHT") + 0]: {
+    right: 0,
+  },
+  [lab("POSITION BOTTOM") + 0]: {
+    bottom: 0,
+  },
   [lab("POSITION RIGHT NEGATIVE")]: {
     right: "-16px",
   },
