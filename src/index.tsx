@@ -1,11 +1,20 @@
 import React, { useContext } from "react";
-import PropTypes from "prop-types";
+import { Cast, Magic, MagicBookProps, CastProps } from "../lib/types";
+import { createStyles, Theme } from "@material-ui/core";
 
-const MagicBookContext = React.createContext();
+type MagicBookContextType = { [key: string]: string };
+
+const defaultMagic = createStyles(makeMagicBook);
+console.log("DEFAULTMAGIC", defaultMagic);
+
+const MagicBookContext = React.createContext<MagicBookContextType>(defaultMagic);
 
 const defaultClasses = {};
 
-export function cast(object = defaultClasses, phrase) {
+function cast(object: Magic, phrase : string): string {
+  if (!object)
+    object = defaultClasses;
+
   if (!phrase)
     return "";
 
@@ -19,13 +28,13 @@ export function cast(object = defaultClasses, phrase) {
   }).join(" ");
 }
 
-export function useCast() {
+export function useCast(): Cast {
   const context = useContext(MagicBookContext);
-  return phrase => cast(context, phrase);
+  return (phrase: string) => cast(context, phrase);
 }
 
-export function withCast(Component) {
-  function CastComponent(props) {
+export function withCast(Component : React.ComponentType<CastProps>): React.FC<object> {
+  function CastComponent(props : object) {
     const c = useCast();
 
     return <Component c={c} { ...props } />;
@@ -34,8 +43,8 @@ export function withCast(Component) {
   return CastComponent;
 }
 
-export function withMagicBook(Component) {
-  function ProviderComponent(props) {
+export function withMagicBook<P extends object>(Component: React.ComponentType<P>): React.FC<P&MagicBookProps> {
+  function ProviderComponent(props: any) {
     const { classes, ...rest } = props;
 
     return (
@@ -44,10 +53,6 @@ export function withMagicBook(Component) {
       </MagicBookContext.Provider>
     );
   }
-
-  ProviderComponent.propTypes = {
-    classes: PropTypes.objectOf(PropTypes.string),
-  };
 
   return ProviderComponent;
 }
@@ -88,6 +93,7 @@ const LABELS = {
   LEFT: "left",
   RIGHT: "right",
   TOP: "top",
+  BOTTOM: "bottom",
   ROTATE: "rotate",
   PI: "pi",
   OVER: "over",
@@ -97,7 +103,7 @@ const LABELS = {
   BLACK: "black",
 };
 
-function lab(phrase) {
+function lab(phrase: string) {
   const ret = phrase.split(" ")
     .map(word => {
       const label = LABELS[word];
@@ -107,7 +113,7 @@ function lab(phrase) {
     })
     .join("");
 
-  return ret.charAt(0).toLowerCase() + ret.substr(1);
+  return ret.charAt(0).toLowerCase() + ret.substring(1);
 }
 
 const horizontal0 = {
@@ -312,7 +318,7 @@ const preStyles = {
   },
 };
 
-export function makeMagicBook(theme) {
+export function makeMagicBook(theme: Theme) {
   return {
     ...preStyles,
     caption: theme.typography.caption,
