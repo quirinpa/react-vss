@@ -1,60 +1,60 @@
 import React, { useContext } from "react";
 import { Cast, Magic, MagicBookProps, CastProps } from "../lib/types";
-import { createStyles, Theme } from "@material-ui/core";
+import { createTheme, Theme } from "@material-ui/core";
 
 type MagicBookContextType = { [key: string]: string };
 
-const defaultMagic = createStyles(makeMagicBook);
-console.log("DEFAULTMAGIC", defaultMagic);
+function cssTransform(thisKey: string, value: object) {
+  if (!value)
+    return [];
 
-const MagicBookContext = React.createContext<MagicBookContextType>(defaultMagic);
+  let classes: [string, object][] = [];
+  let thisValue = {};
+  let touched = false;
 
-const defaultClasses = {};
+  Object.entries(value).forEach(([key, value]) => {
+    if (key.charAt(0) == "&") {
+      const innerKey = thisKey + key.substring(1);
+      classes = classes.concat(cssTransform(innerKey, value));
+      return;
+    }
 
-function cast(object: Magic, phrase : string): string {
-  if (!object)
-    object = defaultClasses;
+    thisValue[key] = value;
+    touched = true;
+  });
 
-  if (!phrase)
-    return "";
+  if (touched)
+    classes.push([
+      thisKey,
+      thisValue
+    ]);
 
-  return phrase.split(" ").map(word => {
-    const value = object[word];
-
-    if (!value)
-      console.info("failed to cast " + word);
-
-    return value;
-  }).join(" ");
+  return classes;
 }
 
-export function useCast(): Cast {
-  const context = useContext(MagicBookContext);
-  return (phrase: string) => cast(context, phrase);
+export function dashCamelCase(camelCase: string) {
+  return camelCase.replace(/([A-Z])/g, function (g) { return "-" + g.toLowerCase(); });
 }
 
-export function withCast(Component : React.ComponentType<CastProps>): React.FC<object> {
-  function CastComponent(props : object) {
-    const c = useCast();
+function makeStyleSheet(obj: object, prefix = "styles") {
+  const style = document.createElement("style");
+  let classes = {};
+  let css = "";
 
-    return <Component c={c} { ...props } />;
-  }
+  Object.entries(obj).forEach(([key, value]) => {
+    cssTransform(key, value).forEach(([key, value]) => {
+      css += "." + prefix + "-" + key + " {\n" + Object.entries(value).map(
+        ([key, value]) => dashCamelCase(key) + ": " + value.toString() + ";\n"
+      ).join("") + "}\n";
 
-  return CastComponent;
-}
+      classes[key] = prefix + "-" + key;
+    });
+  });
 
-export function withMagicBook<P extends object>(Component: React.ComponentType<P>): React.FC<P&MagicBookProps> {
-  function ProviderComponent(props: any) {
-    const { classes, ...rest } = props;
-
-    return (
-      <MagicBookContext.Provider value={classes}>
-        <Component { ...rest } />
-      </MagicBookContext.Provider>
-    );
-  }
-
-  return ProviderComponent;
+  style.appendChild(document.createTextNode(css));
+  style.type = "text/css";
+  document.head.appendChild(style);
+  return classes;
 }
 
 const LABELS = {
@@ -374,3 +374,58 @@ export function makeMagicBook(theme: Theme) {
     },
   };
 }
+
+const defaultTheme = createTheme();
+const defaultMagicBook = makeMagicBook(defaultTheme);
+const defaultMagic = makeStyleSheet(defaultMagicBook);
+
+const MagicBookContext = React.createContext<MagicBookContextType>(defaultMagic);
+
+const defaultClasses = {};
+
+function cast(object: Magic, phrase : string): string {
+  if (!object)
+    object = defaultClasses;
+
+  if (!phrase)
+    return "";
+
+  return phrase.split(" ").map(word => {
+    const value = object[word];
+
+    if (!value)
+      console.info("failed to cast " + word);
+
+    return value;
+  }).join(" ");
+}
+
+export function useCast(): Cast {
+  const context = useContext(MagicBookContext);
+  return (phrase: string) => cast(context, phrase);
+}
+
+export function withCast(Component : React.ComponentType<CastProps>): React.FC<object> {
+  function CastComponent(props : object) {
+    const c = useCast();
+
+    return <Component c={c} { ...props } />;
+  }
+
+  return CastComponent;
+}
+
+export function withMagicBook<P extends object>(Component: React.ComponentType<P>): React.FC<P&MagicBookProps> {
+  function ProviderComponent(props: any) {
+    const { classes, ...rest } = props;
+
+    return (
+      <MagicBookContext.Provider value={classes}>
+        <Component { ...rest } />
+      </MagicBookContext.Provider>
+    );
+  }
+
+  return ProviderComponent;
+}
+
