@@ -1,8 +1,6 @@
 import React, { useContext } from "react";
-import { Cast, Magic, MagicBookProps, CastProps } from "../lib/types";
+import { Cast, Magic, MagicClassesProps, CastProps, CastComponentProps } from "../lib/types";
 import { createTheme, Theme } from "@material-ui/core";
-
-type MagicBookContextType = { [key: string]: string };
 
 function cssTransform(thisKey: string, value: object) {
   if (!value)
@@ -36,7 +34,7 @@ export function dashCamelCase(camelCase: string) {
   return camelCase.replace(/([A-Z])/g, function (g) { return "-" + g.toLowerCase(); });
 }
 
-function makeStyleSheet(obj: object, prefix = "styles") {
+function makeMagic(obj: object, prefix = "styles") {
   const style = document.createElement("style");
   let classes = {};
   let css = "";
@@ -377,9 +375,10 @@ export function makeMagicBook(theme: Theme) {
 
 const defaultTheme = createTheme();
 const defaultMagicBook = makeMagicBook(defaultTheme);
-const defaultMagic = makeStyleSheet(defaultMagicBook);
+const defaultMagic = makeMagic(defaultMagicBook);
 
-const MagicBookContext = React.createContext<MagicBookContextType>(defaultMagic);
+export
+const MagicContext = React.createContext<Magic>(defaultMagic);
 
 const defaultClasses = {};
 
@@ -400,32 +399,34 @@ function cast(object: Magic, phrase : string): string {
   }).join(" ");
 }
 
-export function useCast(): Cast {
-  const context = useContext(MagicBookContext);
-  return (phrase: string) => cast(context, phrase);
+export function useCast(Context: React.Context<Magic>|null): Cast {
+  const magic = useContext(Context ?? MagicContext);
+  return (phrase: string) => cast(magic, phrase);
 }
 
-export function withCast(Component : React.ComponentType<CastProps>): React.FC<object> {
-  function CastComponent(props : object) {
-    const c = useCast();
+export function withCast(
+  Component : React.ComponentType<CastProps>
+): React.FC<CastComponentProps> {
+  function CastComponent(props: CastComponentProps) {
+    const { dependencies, ...rest } = props;
+    const c = useCast(dependencies?.MagicContext ?? MagicContext);
 
-    return <Component c={c} { ...props } />;
+    return <Component c={c} { ...rest } />;
   }
 
   return CastComponent;
 }
 
-export function withMagicBook<P extends object>(Component: React.ComponentType<P>): React.FC<P&MagicBookProps> {
+export function withMagicClasses<P extends object>(Component: React.ComponentType<P>): React.FC<P&MagicClassesProps> {
   function ProviderComponent(props: any) {
     const { classes, ...rest } = props;
 
     return (
-      <MagicBookContext.Provider value={classes}>
+      <MagicContext.Provider value={classes}>
         <Component { ...rest } />
-      </MagicBookContext.Provider>
+      </MagicContext.Provider>
     );
   }
 
   return ProviderComponent;
 }
-
