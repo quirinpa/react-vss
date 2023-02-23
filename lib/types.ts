@@ -17,7 +17,9 @@ interface MagicClassesProps {
 export
 interface CastComponentProps {
   dependencies?: {
-    MagicContext?: React.Context<Magic>,
+    "@tty-pt/styles"?: {
+      MagicContext?: React.Context<Magic>,
+    },
   },
   [key: string]: any,
 }

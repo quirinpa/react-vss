@@ -380,11 +380,9 @@ const defaultMagic = makeMagic(defaultMagicBook);
 export
 const MagicContext = React.createContext<Magic>(defaultMagic);
 
-const defaultClasses = {};
-
 function cast(object: Magic, phrase : string): string {
   if (!object)
-    object = defaultClasses;
+    object = {};
 
   if (!phrase)
     return "";
@@ -408,8 +406,8 @@ export function withCast(
   Component : React.ComponentType<CastProps>
 ): React.FC<CastComponentProps> {
   function CastComponent(props: CastComponentProps) {
-    const { dependencies, ...rest } = props;
-    const c = useCast(dependencies?.MagicContext ?? MagicContext);
+    const { dependencies = {}, ...rest } = props;
+    const c = useCast(dependencies["@tty-pt/styles"]?.MagicContext ?? MagicContext);
 
     return <Component c={c} { ...rest } />;
   }
@@ -417,14 +415,14 @@ export function withCast(
   return CastComponent;
 }
 
-export function withMagicClasses<P extends object>(Component: React.ComponentType<P>): React.FC<P&MagicClassesProps> {
+export function withMagicClasses<P extends object>(Component: React.ComponentType<P>, Context: React.Context<Magic> = MagicContext): React.FC<P&MagicClassesProps> {
   function ProviderComponent(props: any) {
     const { classes, ...rest } = props;
 
     return (
-      <MagicContext.Provider value={classes}>
+      <Context.Provider value={classes}>
         <Component { ...rest } />
-      </MagicContext.Provider>
+      </Context.Provider>
     );
   }
 

@@ -9,5 +9,9 @@ declare function withCast(Com: React.ComponentType<CastProps>): React.FC<CastCom
  * for use with withStyles(style)(withMagicClasses(Component)).
  * provides you with the Magic context.
  */
-declare function withMagicClasses<P extends object>(Com: React.ComponentType<P>): React.FC<P&MagicClassesProps>;
-declare const MagicBookContext: React.Context<Magic>;
+declare function withMagicClasses<P extends object>(
+  Com: React.ComponentType<P>,
+  Context: React.Context<Magic>|null
+): React.FC<P&MagicClassesProps>;
+
+declare const MagicContext: React.Context<Magic>;
