@@ -325,11 +325,11 @@ export function makeMagicBook(theme: Theme) {
     h5: theme.typography.h5,
     h6: theme.typography.h6,
     subtitle2: theme.typography.subtitle2,
-    textPrimary: {
-      color: theme.palette.text.primary,
+    colorPrimary: {
+      color: theme.palette.text.primary + " !important",
     },
-    textSecondary: {
-      color: theme.palette.text.secondary,
+    colorSecondary: {
+      color: theme.palette.text.secondary + " !important",
     },
     [lab("BACKGROUND SUCCESS")]: {
       backgroundColor: theme.palette.success.main,
