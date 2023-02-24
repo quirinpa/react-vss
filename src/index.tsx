@@ -1,5 +1,5 @@
 import React, { useContext } from "react";
-import { Cast, Magic, MagicClassesProps, CastProps, CastComponentProps } from "../lib/types";
+import { Cast, Magic, MagicClassesProps, CastProps, CastComponentProps, Dependencies, WithThemeProps } from "../lib/types";
 import { createTheme, Theme } from "@material-ui/core";
 
 function cssTransform(thisKey: string, value: object) {
@@ -284,6 +284,9 @@ const preStyles = {
   [lab("FLEX WRAP")]: {
     flexWrap: "wrap",
   },
+  [lab("TABLE_LAYOUT")]: {
+    tableLayout: "fixed",
+  },
   [lab("TABLE_LAYOUT FIXED")]: {
     tableLayout: "fixed",
   },
@@ -355,6 +358,9 @@ export function makeMagicBook(theme: Theme) {
     borderTopDivider: {
       borderTop: "solid thin " + theme.palette.divider,
     },
+    [lab("FONT_WEIGHT")]: {
+      fontWeight: 600,
+    },
     [lab("FONT_WEIGHT BOLD")]: {
       fontWeight: 600,
     },
@@ -366,6 +372,9 @@ export function makeMagicBook(theme: Theme) {
     },
     [lab("COLOR ERROR LIGHT")]: {
       color: theme.palette.error.light,
+    },
+    [lab("ROTATE")]: {
+      transform: "rotate(90deg)",
     },
     [lab("ROTATE PI OVER TWO")]: {
       transform: "rotate(90deg)",
@@ -427,4 +436,24 @@ export function withMagicClasses<P extends object>(Component: React.ComponentTyp
   }
 
   return ProviderComponent;
+}
+
+export function withMagic(
+  Component: React.ComponentType<object>,
+  getStyle: typeof makeMagicBook = makeMagicBook,
+  dependencies: Dependencies = {}
+): React.FC<WithThemeProps>{
+  return function WithMagic(props: WithThemeProps) {
+    const { theme, ...rest } = props;
+
+    const magic: Magic = theme ? (dependencies["@tty-pt/styles"]?.makeMagic ?? makeMagic)(
+      getStyle(theme)
+    ) : defaultMagic;
+
+    const Context = dependencies["@tty-pt/styles"]?.MagicContext ?? MagicContext;
+
+    return (<Context.Provider value={magic}>
+      <Component { ...rest } />
+    </Context.Provider>);
+  }
 }

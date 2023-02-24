@@ -1,3 +1,5 @@
+import { Theme } from "@material-ui/core";
+import { ThemeProvider } from "@material-ui/styles";
 export type Cast = (phrase: string) => string;
 type Css = { [key: string]: any };
 export type MagicBook = { [word: string]: Css };
@@ -15,11 +17,21 @@ interface MagicClassesProps {
 }
 
 export
-interface CastComponentProps {
-  dependencies?: {
-    "@tty-pt/styles"?: {
-      MagicContext?: React.Context<Magic>,
-    },
+interface Dependencies {
+  "@tty-pt/styles"?: {
+    MagicContext?: React.Context<Magic>,
+    makeMagic?: (mb: MagicBook) => Magic,
   },
+}
+
+export
+interface CastComponentProps {
+  dependencies?: Dependencies,
+  [key: string]: any,
+}
+
+export
+interface WithThemeProps {
+  theme?: Theme,
   [key: string]: any,
 }
