@@ -1,6 +1,6 @@
 {
   "name": "@tty-pt/styles",
-  "version": "0.0.3-13",
+  "version": "0.0.3-15",
   "description": "let your components know about your app's styling preferences, use less local styles",
   "main": "build/main.js",
   "types": "lib/index.d.ts",

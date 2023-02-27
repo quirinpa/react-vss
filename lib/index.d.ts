@@ -11,7 +11,7 @@ declare function withCast(Com: React.ComponentType<CastProps>): React.FC<CastCom
  */
 declare function withMagicClasses<P extends object>(
   Com: React.ComponentType<P>,
-  Context: React.Context<Magic>|null
+  Context?: React.Context<Magic>,
 ): React.FC<P&MagicClassesProps>;
 
 declare function withMagic(

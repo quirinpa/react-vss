@@ -1,5 +1,4 @@
 import { Theme } from "@material-ui/core";
-import { ThemeProvider } from "@material-ui/styles";
 export type Cast = (phrase: string) => string;
 type Css = { [key: string]: any };
 export type MagicBook = { [word: string]: Css };
