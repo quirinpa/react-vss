@@ -2,7 +2,6 @@ lockfileVersion: 5.4
 
 specifiers:
   '@material-ui/core': ^4.12.4
-  '@material-ui/styles': ^4.11.5
   '@tty-pt/scripts': 0.0.1-56
   '@types/node': ^18.14.0
   '@types/react': ^16.14.35
@@ -11,7 +10,6 @@ specifiers:
 
 devDependencies:
   '@material-ui/core': 4.12.4_ugrpyuvudjf6jbttetu7vnqf5m
-  '@material-ui/styles': 4.11.5_ugrpyuvudjf6jbttetu7vnqf5m
   '@tty-pt/scripts': 0.0.1-56_ugrpyuvudjf6jbttetu7vnqf5m
   '@types/node': 18.14.0
   '@types/react': 16.14.35
