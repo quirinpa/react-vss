@@ -60,8 +60,9 @@ const LABELS = {
   HORIZONTAL: "horizontal",
   VERTICAL: "vertical",
   FULL: "full",
-  TEXT_ALIGN: "textAlign",
-  ALIGN_ITEMS: "alignItems",
+  TEXT: "text",
+  ALIGN: "align",
+  ITEMS: "items",
   JUSTIFY_CONTENT: "justifyContent",
   CENTER: "center",
   START: "start",
@@ -100,6 +101,7 @@ const LABELS = {
   WHITE: "white",
   BLACK: "black",
   OVERFLOW: "overflow",
+  ELLIPSIS: "ellipsis",
   HIDDEN: "hidden",
   AUTO: "auto",
 };
@@ -225,13 +227,13 @@ const preStyles = {
   overflowHidden: {
     overflow: "hidden",
   },
-  [lab("ALIGN_ITEMS START")]: {
+  [lab("ALIGN ITEMS START")]: {
     alignItems: "flex-start",
   },
-  [lab("ALIGN_ITEMS END")]: {
+  [lab("ALIGN ITEMS END")]: {
     alignItems: "flex-end",
   },
-  [lab("ALIGN_ITEMS CENTER")]: {
+  [lab("ALIGN ITEMS CENTER")]: {
     alignItems: "center",
   },
   [lab("JUSTIFY_CONTENT CENTER")]: {
@@ -249,7 +251,7 @@ const preStyles = {
   [lab("SIZE HORIZONTAL FULL")]: {
     width: "100%",
   },
-  [lab("TEXT_ALIGN CENTER")]: {
+  [lab("TEXT ALIGN CENTER")]: {
     textAlign: "center",
   },
   marginHorizontalNeg: {
@@ -387,6 +389,9 @@ export function makeMagicBook(theme: Theme) {
     },
     [lab("OVERFLOW AUTO")]: {
       overflow: "auto",
+    },
+    [lab("TEXT OVERFLOW ELLIPSIS")]: {
+      textOverflow: "ellipsis",
     },
   };
 }
