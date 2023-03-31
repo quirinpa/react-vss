@@ -209,6 +209,9 @@ This can be piOverTwo. Default.
 ### 19: rotate[\<angle\>]
 > Rotate this element by \<angle\>
 
+### 20: overflow[\<overflow\>]
+> Apply \<overflow\> as value of overflow property.
+
 ## Building
 You can build this library by using [pnpm](https://pnpm.io/installation) instead of npm.
 

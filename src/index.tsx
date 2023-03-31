@@ -99,6 +99,9 @@ const LABELS = {
   OPACITY: "opacity",
   WHITE: "white",
   BLACK: "black",
+  OVERFLOW: "overflow",
+  HIDDEN: "hidden",
+  AUTO: "auto",
 };
 
 function lab(phrase: string) {
@@ -378,6 +381,12 @@ export function makeMagicBook(theme: Theme) {
     },
     [lab("ROTATE PI OVER TWO")]: {
       transform: "rotate(90deg)",
+    },
+    [lab("OVERFLOW HIDDEN")]: {
+      overflow: "hidden",
+    },
+    [lab("OVERFLOW AUTO")]: {
+      overflow: "auto",
     },
   };
 }
