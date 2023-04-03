@@ -178,8 +178,8 @@ This can be piOverTwo. Default.
 ### 10: justifyContent[\<justify\>]
 > This sets the element's property of justifyContent to the value of \<justify\>.
 
-### 11: size[\<axis\>][\<size\>]
-> This sets the element's size to be \<size\> in the specified axis.
+### 11: size[Max][\<axis\>][\<size\>]
+> This sets the element's (default or maximum) size to be \<size\> in the specified axis.
 > In this specific case, \<size\> can also be "full" meaning "100%".
 
 ### 12: textAlign[\<textAlign\>]

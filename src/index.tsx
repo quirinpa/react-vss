@@ -104,6 +104,9 @@ const LABELS = {
   ELLIPSIS: "ellipsis",
   HIDDEN: "hidden",
   AUTO: "auto",
+  MAX: "max",
+  SEVEN: "seven",
+  REM: "rem",
 };
 
 function lab(phrase: string) {
@@ -247,6 +250,9 @@ const preStyles = {
   },
   [lab("SIZE VERTICAL FULL")]: {
     height: "100%",
+  },
+  [lab("SIZE MAX VERTICAL SEVEN REM")]: {
+    maxHeight: "7rem",
   },
   [lab("SIZE HORIZONTAL FULL")]: {
     width: "100%",
