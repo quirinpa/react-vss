@@ -63,6 +63,7 @@ const LABELS = {
   TEXT: "text",
   ALIGN: "align",
   ITEMS: "items",
+  ALIGN_ITEMS: "alignItems",
   JUSTIFY_CONTENT: "justifyContent",
   CENTER: "center",
   START: "start",
@@ -230,13 +231,13 @@ const preStyles = {
   overflowHidden: {
     overflow: "hidden",
   },
-  [lab("ALIGN ITEMS START")]: {
+  [lab("ALIGN_ITEMS START")]: {
     alignItems: "flex-start",
   },
-  [lab("ALIGN ITEMS END")]: {
+  [lab("ALIGN_ITEMS END")]: {
     alignItems: "flex-end",
   },
-  [lab("ALIGN ITEMS CENTER")]: {
+  [lab("ALIGN_ITEMS CENTER")]: {
     alignItems: "center",
   },
   [lab("JUSTIFY_CONTENT CENTER")]: {
