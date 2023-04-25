@@ -1,5 +1,5 @@
-import React, { useContext } from "react";
-import { Cast, Css, Magic, MagicBook, MagicClassesProps, CastProps, CastComponentProps, Dependencies, WithThemeProps } from "../lib/types";
+import React from "react";
+import { Css, Magic, MagicBook, MagicBag, Dependencies, SimpleThemeProps, WithThemeProps } from "../lib/types";
 import { createTheme, Theme } from "@material-ui/core";
 
 export function dashCamelCase(camelCase: string) {
@@ -16,7 +16,7 @@ function cssTransform(classes: Magic, content: Css, dashKey: string, value: Css,
   if (!value)
     return [];
 
-  const fullKey = reprefix + dashKey;
+  const fullKey = reprefix + "." + dashKey;
   let ret = "";
 
   for (const [key, spell] of Object.entries(value)) {
@@ -33,9 +33,9 @@ function cssTransform(classes: Magic, content: Css, dashKey: string, value: Css,
 
   {/* console.log("cssTransform check", content, fullKey); */}
   if (content[fullKey]) {
-    if (fullKey.indexOf(" ") === -1)
-      classes[camelCaseDash(fullKey)] = fullKey;
-    ret += "." + fullKey + " {\n" + Object.entries(content[fullKey]).map(
+    if (dashKey.indexOf(" ") === -1)
+      classes[camelCaseDash(dashKey)] = dashKey;
+    ret += fullKey + " {\n" + Object.entries(content[fullKey]).map(
       ([key, value]: [string, any]) => dashCamelCase(key) + ": " + value.toString() + ";\n"
     ).join("") + "}\n";
   }
@@ -43,8 +43,8 @@ function cssTransform(classes: Magic, content: Css, dashKey: string, value: Css,
   return ret;
 }
 
-function makeMagic(obj: object, prefix = "") {
-  const reprefix = prefix ? prefix + "-" : "";
+export
+function makeMagic(obj: object, reprefix = "") {
   const style = document.createElement("style");
   let classes = {};
   let css = "";
@@ -53,6 +53,7 @@ function makeMagic(obj: object, prefix = "") {
     css += cssTransform(classes, {}, dashCamelCase(key), value, reprefix);
 
   {/* console.log("css", css); */}
+  {/* console.log("added css sheet", reprefix); */}
   style.appendChild(document.createTextNode(css));
   style.type = "text/css";
   document.head.appendChild(style);
@@ -285,8 +286,19 @@ const baseMagicBook = {
   },
 };
 
-export function makeThemeMagicBook(theme: Theme) {
+export function makeThemeMagicBook(themeName: string, theme: Theme): MagicBook {
+  {/* console.log("makeThemeMagicBook", theme); */}
   return {
+    paper: {
+      light: {
+        backgroundColor: "#d2d2d2",
+      },
+      dark: {
+        backgroundColor: "#424242",
+      },
+    }[themeName] ?? {
+      backgroundColor: "#d2d2d2",
+    },
     caption: theme.typography.caption,
     h3: theme.typography.h3,
     h4: theme.typography.h4,
@@ -333,95 +345,101 @@ export function makeThemeMagicBook(theme: Theme) {
 }
 
 const defaultTheme = createTheme();
-export const themeMagicBook = makeThemeMagicBook(defaultTheme);
+export const themeMagicBook = makeThemeMagicBook("light", defaultTheme);
 
-interface MagicBag {
-  [key: string]: MagicBook;
-}
-
-export const defaultMagicBag = { base: baseMagicBook, theme: themeMagicBook };
+export const defaultMagicBag = {
+  "": { ...baseMagicBook, ...themeMagicBook },
+};
 
 export
-function merge(magicBag: MagicBag): MagicBook {
+function merge(obj: object) {
   let ret = {};
 
-  for (const magicBook of Object.values(magicBag))
-    for (const [spellKey, spell] of Object.entries(magicBook))
-      ret[spellKey] = spell;
+  for (const value of Object.values(obj))
+    for (const [subKey, subValue] of Object.entries(value))
+      ret[subKey] = subValue;
 
   return ret;
 }
 
-export const defaultMagic = makeMagic(merge(defaultMagicBag));
+export
+function mergeBag(magicBag: MagicBag) {
+  let ret = {};
+
+  for (const [magicBookKey, magicBook] of Object.entries(magicBag))
+    for (const [magicKey, magic] of Object.entries(makeMagic(magicBook, magicBookKey)))
+      ret[magicKey] = magic;
+
+  return ret;
+}
+
+export const defaultMagic = mergeBag(defaultMagicBag);
 
 export
-const MagicContext = React.createContext<Magic>(defaultMagic);
-
-function cast(object: Magic, phrase : string): string {
-  if (!object)
-    object = {};
-
-  if (!phrase)
-    return "";
-
-  return phrase.split(" ").map(word => {
-    const value = object[word];
-
-    if (!value)
-      console.info("failed to cast " + word);
-
-    return value;
-  }).join(" ");
+function cast(phrase : string): string {
+  return phrase.split(" ").map(camelCaseDash).join(" ");
 }
 
-export function useCast(Context: React.Context<Magic>|null): Cast {
-  const magic = useContext(Context ?? MagicContext);
-  return (phrase: string) => cast(magic, phrase);
+let cache = {};
+let mergeCache = {};
+let themeCache = {};
+
+export
+function getMagicTheme(str) {
+  return themeCache[str] ?? defaultTheme;
 }
 
-export function withCast(
-  Component : React.ComponentType<CastProps>
-): React.FC<CastComponentProps> {
-  function CastComponent(props: CastComponentProps) {
-    const { dependencies = {}, ...rest } = props;
-    const c = useCast(dependencies["@tty-pt/styles"]?.MagicContext ?? MagicContext);
+export function getThemeMagic(theme: string, getTheme: typeof getMagicTheme, getStyle: typeof makeThemeMagicBook) {
+  {/* console.log("getThemeMagic", theme, getTheme, getStyle, cache); */}
+  const item = cache[theme];
 
-    return <Component c={c} { ...rest } />;
-  }
+  if (item)
+    return mergeCache;
 
-  return CastComponent;
+  const realTheme = getTheme(theme);
+  cache[theme] = makeMagic(getStyle(theme, realTheme), "." + theme + " ");
+  themeCache[theme] = realTheme;
+  return mergeCache = merge(cache);
 }
 
-export function withMagicClasses<P extends object>(Component: React.ComponentType<P>, Context: React.Context<Magic> = MagicContext): React.FC<P&MagicClassesProps> {
-  function ProviderComponent(props: any) {
-    const { classes, ...rest } = props;
+interface MagicBoxProps {
+  theme?: string;
+  getTheme?: typeof getMagicTheme;
+  getStyle?: typeof makeThemeMagicBook;
+  dependencies?: Dependencies;
+  className?: string;
+}
 
-    return (
-      <Context.Provider value={classes}>
-        <Component { ...rest } />
-      </Context.Provider>
-    );
-  }
+export function MagicBox(props: React.PropsWithChildren<MagicBoxProps>) {
+  const {
+    theme, children, getTheme, getStyle,
+    dependencies = {}, className, ...rest
+  } = props;
 
-  return ProviderComponent;
+  (dependencies?.["@tty-pt/styles"]?.getThemeMagic ?? getThemeMagic)(
+    theme ?? "light",
+    getTheme ?? dependencies?.["@tty-pt/styles"]?.getMagicTheme ?? getMagicTheme,
+    getStyle ?? dependencies?.["@tty-pt/styles"]?.makeThemeMagicBook ?? makeThemeMagicBook,
+  );
+
+  return (<div className={className + " " + theme} { ...rest } >
+    { children }
+  </div>);
 }
 
 export function withMagic(
-  Component: React.ComponentType<object>,
-  getStyle: typeof makeThemeMagicBook = makeThemeMagicBook,
-  dependencies: Dependencies = {}
-): React.FC<WithThemeProps>{
-  return function WithMagic(props: WithThemeProps) {
-    const { theme, ...rest } = props;
+  Component: React.ComponentType<SimpleThemeProps>,
+  dependencies?: Dependencies,
+): React.ComponentType<WithThemeProps>{
+  return function WithMagicBox(props: WithThemeProps) {
+    const { theme, className, ...rest } = props;
 
-    const magic: Magic = theme ? (dependencies["@tty-pt/styles"]?.makeMagic ?? makeMagic)(
-      getStyle(theme)
-    ) : defaultMagic;
-
-    const Context = dependencies["@tty-pt/styles"]?.MagicContext ?? MagicContext;
-
-    return (<Context.Provider value={magic}>
-      <Component { ...rest } />
-    </Context.Provider>);
+    return (<MagicBox
+      theme={theme}
+      className={className}
+      dependencies={dependencies}
+    >
+      <Component theme={theme} { ...rest } />
+    </MagicBox>);
   };
 }

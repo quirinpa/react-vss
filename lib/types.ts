@@ -1,36 +1,38 @@
 import { Theme } from "@material-ui/core";
-export type Cast = (phrase: string) => string;
 export type Css = { [key: string]: any };
 export type MagicBook = { [word: string]: Css };
+export type MagicBag = { [key: string]: MagicBook };
 export type Magic = { [word: string]: string };
 
 export
-interface CastProps {
-  c: (phrase: string) => string,
-  [key: string]: any,
+interface SimpleThemeProps {
+  theme: string;
 }
 
 export
-interface MagicClassesProps {
-  classes: Magic,
+interface WithThemeProps extends SimpleThemeProps {
+  className?: string;
+  [key: string]: any;
 }
+
+export type makeMagicType = (mb: MagicBook) => Magic;
+export type makeThemeMagicBookType = (name: string, theme: Theme) => MagicBook;
+export type getMagicThemeType = (theme: string) => Theme;
+export type getThemeMagicType = (theme: string, getTheme: getMagicThemeType, getStyle: makeThemeMagicBookType) => Magic;
+
+export type withMagicType = (
+  Component: React.ComponentType<SimpleThemeProps> ,
+  dependencies?: Dependencies,
+  context?: boolean,
+) => React.ComponentType<WithThemeProps>;
 
 export
 interface Dependencies {
   "@tty-pt/styles"?: {
-    MagicContext?: React.Context<Magic>,
-    makeMagic?: (mb: MagicBook) => Magic,
+    makeMagic?: makeMagicType;
+    getThemeMagic?: getThemeMagicType;
+    withMagic?: withMagicType;
+    getMagicTheme?: getMagicThemeType;
+    makeThemeMagicBook?: makeThemeMagicBookType;
   },
-}
-
-export
-interface CastComponentProps {
-  dependencies?: Dependencies,
-  [key: string]: any,
-}
-
-export
-interface WithThemeProps {
-  theme?: Theme,
-  [key: string]: any,
 }
