@@ -1,6 +1,6 @@
 import React from "react";
-import { Css, Magic, MagicBook, MagicBag, Dependencies, SimpleThemeProps, WithThemeProps } from "../lib/types";
-import { createTheme, Theme } from "@material-ui/core";
+import { Theme, SpacingOctave, Css, Magic, MagicBook, MagicBag, Dependencies, SimpleThemeProps, WithThemeProps } from "../lib/types";
+import { createTheme } from "@material-ui/core";
 
 export function dashCamelCase(camelCase: string) {
   return camelCase.replace(/([A-Z0-9])+/g, function (g) { return "-" + g.toLowerCase(); })
@@ -60,291 +60,230 @@ function makeMagic(obj: object, reprefix = "") {
   return classes;
 }
 
-const horizontal0 = {
-  display: "flex",
-  flexDirection: "initial",
-};
+const horizontal0 = { display: "flex", flexDirection: "initial" };
+const vertical0 = { display: "flex", flexDirection: "column" };
 
-const horizontal = {
-  ...horizontal0,
-  gap: "16px",
-};
-
-const vertical0 = {
-  display: "flex",
-  flexDirection: "column",
-};
+function getTable(prefix, table, property?) {
+  const realProperty = property ?? dashCamelCase(prefix);
+  return Object.entries(table).reduce((a, [key, value]) => ({
+    ...a,
+    [prefix + key]: { [realProperty]: value }
+  }), {});
+}
 
 const baseMagicBook = {
   horizontal0,
-  horizontal,
-  horizontalSmall: {
-    ...horizontal0,
-    gap: "8px",
-  },
-  blockHorizontal: {
-    "& > *": {
-      float: "left",
-      marginLeft: "16px",
-      "&:first": {
-        marginLeft: "0px",
-      }
-    },
-  },
   vertical0,
-  vertical: {
-    ...vertical0,
-    rowGap: "16px",
-  },
-  verticalSmall: {
-    ...vertical0,
-    rowGap: "8px",
-  },
-  pad: {
-    padding: "16px",
-  },
-  padSmall: {
-    padding: "8px",
-  },
-  padVertical: {
-    paddingTop: "16px",
-    paddingBottom: "16px",
-  },
-  padVerticalSmall: {
-    paddingTop: "8px",
-    paddingBottom: "8px",
-  },
-  padHorizontal: {
-    paddingLeft: "16px",
-    paddingRight: "16px",
-  },
-  padHorizontalSmall: {
-    paddingLeft: "8px",
-    paddingRight: "8px",
-  },
-  tableHorizontalSmall: {
-    "& th": {
-      paddingLeft: "8px",
-      paddingRight: "8px",
-    },
-    "& td": {
-      paddingLeft: "8px",
-      paddingRight: "8px",
-    }
-  },
-  relative: {
-    position: "relative",
-  },
-  absolute: {
-    position: "absolute",
-  },
-  positionTop0: {
-    top: 0,
-  },
-  positionLeft0: {
-    left: 0,
-  },
-  positionRight0: {
-    right: 0,
-  },
-  positionBottom0: {
-    bottom: 0,
-  },
-  positionRightNeg: {
-    right: "-16px",
-  },
-  positionTopNeg: {
-    top: "-16px",
-  },
-  alignSelfStretch: {
-    alignSelf: "stretch",
-  },
-  flexGrow: {
-    flexGrow: 1,
-  },
-  overflowAuto: {
-    overflow: "auto",
-  },
-  overflowHidden: {
-    overflow: "hidden",
-  },
-  alignItemsStart: {
-    alignItems: "flex-start",
-  },
-  alignItemsEnd: {
-    alignItems: "flex-end",
-  },
-  alignItemsCenter: {
-    alignItems: "center",
-  },
-  justifyContentCenter: {
-    justifyContent: "center",
-  },
-  justifyContentEnd: {
-    justifyContent: "flex-end",
-  },
-  justifyContentSpaceBetween: {
-    justifyContent: "space-between",
-  },
-  sizeVerticalFull: {
-    height: "100%",
-  },
+  relative: { position: "relative" },
+  absolute: { position: "absolute" },
+  positionTop0: { top: 0 },
+  positionLeft0: { left: 0 },
+  positionRight0: { right: 0 },
+  positionBottom0: { bottom: 0 },
+  margin0: { margin: 0 },
+  marginTop0: { marginTop: 0 },
+  marginLeft0: { marginLeft: 0 },
+  marginRight0: { marginRight: 0 },
+  marginBottom0: { marginBottom: 0 },
+  padding0: { padding: 0 },
+  paddingTop0: { paddingTop: 0 },
+  paddingLeft0: { paddingLeft: 0 },
+  paddingRight0: { paddingRight: 0 },
+  paddingBottom0: { paddingBottom: 0 },
+  ...getTable("alignSelf", {
+    "": "stretch",
+  }),
+  flexGrow: { flexGrow: 1 },
+  ...getTable("overflow", {
+    "": "auto",
+    Hidden: "hidden",
+  }),
+  ...getTable("alignItems", {
+    "": "center",
+    Start: "start",
+    End: "end",
+  }),
+  ...getTable("justifyContent", {
+    "": "center",
+    Start: "start",
+    SpaceBetween: "space-between",
+    End: "end",
+  }),
+  sizeVerticalFull: { height: "100%" },
+  sizeHorizontalFull: { width: "100%" },
   sizeMaxVertical7Rem: {
     maxHeight: "7rem",
   },
-  sizeHorizontalFull: {
-    width: "100%",
-  },
-  textAlignCenter: {
-    textAlign: "center",
-  },
-  marginHorizontalNeg: {
-    marginLeft: "-16px",
-    marginRight: "-16px",
-  },
-  marginVerticalNeg: {
-    marginTop: "-16px",
-    marginBottom: "-16px",
-  },
-  paddingHorizontalSmall: {
-    paddingLeft: "8px",
-    paddingRight: "8px",
-  },
-  paddingVerticalSmall: {
-    paddingTop: "8px",
-    paddingBottom: "8px",
-  },
-  cursorHorizontalResize: {
-    cursor: "ew-resize",
-  },
-  cursorVerticalResize: {
-    cursor: "ns-resize",
-  },
-  flexGrowChildren: {
-    "& > *": {
-      flexGrow: 1,
-    },
-  },
+  ...getTable("textAlign", {
+    Left: "left",
+    "": "center",
+    Right: "right",
+  }),
+  ...getTable("cursorHorizontal", {
+    "": "ew-resize"
+  }, "cursor"),
+  ...getTable("cursorVertical", {
+    "": "ns-resize"
+  }, "cursor"),
+  flexGrowChildren: { "& > *": { flexGrow: 1 } },
   verticalCenter: {
     display: "inline-flex !important",
     flexDirection: "column",
     justifyContent: "center",
   },
-  flexWrap: {
-    flexWrap: "wrap",
-  },
-  tableLayout: {
-    tableLayout: "fixed",
-  },
-  tableLayoutFixed: {
-    tableLayout: "fixed",
-  },
-  colorInherit: {
-    color: "inherit",
-  },
-  backgroundInherit: {
-    backgroundColor: "inherit",
-  },
-  backgroundWhite: {
-    backgroundColor: "white",
-  },
-  backgroundBlack: {
-    backgroundColor: "black",
-  },
-  marginLeftSmall: {
-    marginLeft: "8px",
-  },
-  margin0: {
-    margin: 0,
-  },
-  opacity3: {
-    opacity: 0.3,
-  },
-  opacity5: {
-    opacity: 0.5,
-  },
-  opacity8: {
-    opacity: 0.8,
-  },
-  fontWeight:{
-    fontWeight: 600,
-  },
-  fontWeightBold: {
-    fontWeight: 600,
-  },
-  borderRadiusSmall: {
-    borderRadius: "8px",
-  },
-  rotate:{
-    transform: "rotate(90deg)",
-  },
-  rotatePiOverTwo: {
-    transform: "rotate(90deg)",
-  },
-  textOverflowEllipsis: {
-    textOverflow: "ellipsis",
-  },
+  flexWrap: { flexWrap: "wrap" },
+  ...getTable("tableLayout", {
+    "": "fixed",
+  }),
+  ...getTable("color", {
+    "": "inherit",
+    White: "white",
+    Black: "black",
+  }),
+  ...getTable("background", {
+    "": "inherit",
+    White: "white",
+    Black: "black",
+  }, "background-color"),
+  ...getTable("opacity", {
+    Smallest: 0.1,
+    Small: 0.3,
+    "": 0.5,
+    Big: 0.8,
+    Biggest: 1,
+  }),
+  ...getTable("fontWeight", {
+    "": 600,
+  }),
+  ...getTable("rotate", {
+    "": "rotate(90deg)",
+  }, "transform"),
+  ...getTable("textOverflow", {
+    "": "ellipsis",
+  }),
 };
 
 export function makeThemeMagicBook(themeName: string, theme: Theme): MagicBook {
+  const spacings: SpacingOctave[] = theme.spacing && typeof(theme.spacing) !== "string"
+    ? theme.spacing : defaultSpacing;
+
+  let spacingSpells = {};
+
+  for (const spacing of spacings)
+    for (let i = (spacing.min ?? 0); i < (spacing.max ?? spacingsTable.length); i += (spacing.step ?? 1)) {
+      const [label, value] = (spacing.func ?? defaultSpacingFunc)(i);
+      spacingSpells["horizontal" + label] = { ...horizontal0, gap: value };
+      spacingSpells["blockHorizontal" + label] = {
+        "& > *": {
+          float: "left",
+          marginLeft: value,
+          "&:first": { marginLeft: "0px" }
+        },
+      };
+      spacingSpells["vertical" + label] = { ...vertical0, rowGap: value };
+      spacingSpells["pad" + label] = { padding: value };
+      spacingSpells["padVertical" + label] = { paddingTop: value, paddingBottom: value };
+      spacingSpells["padHorizontal" + label] = { paddingLeft: value, paddingRight: value };
+      spacingSpells["tableHorizontal" + label] = {
+        "& th": {
+          paddingLeft: "8px",
+          paddingRight: "8px",
+        },
+        "& td": {
+          paddingLeft: "8px",
+          paddingRight: "8px",
+        }
+      };
+      spacingSpells["positionTop" + label] = { top: value };
+      spacingSpells["positionBottom" + label] = { bottom: value };
+      spacingSpells["positionLeft" + label] = { left: value };
+      spacingSpells["positionRight" + label] = { right: value };
+      spacingSpells["positionTop" + label + "Neg"] = { top: "-" + value };
+      spacingSpells["positionBottom" + label + "Neg"] = { bottom: "-" + value };
+      spacingSpells["positionLeft" + label + "Neg"] = { left: "-" + value };
+      spacingSpells["positionRight" + label + "Neg"] = { right: "-" + value };
+      spacingSpells["margin" + label] = { margin: value };
+      spacingSpells["marginNeg" + label] = { margin: "-" + value };
+      spacingSpells["marginVertical" + label] = { marginTop: value, marginBottom: value };
+      spacingSpells["marginHorizontal" + label] = { marginLeft: value, marginRight: value };
+      spacingSpells["marginVertical" + label + "Neg"] = { marginTop: "-" + value, marginBottom: "-" + value };
+      spacingSpells["marginHorizontal" + label + "Neg"] = { marginLeft: "-" + value, marginRight: "-" + value };
+      spacingSpells["marginTop" + label] = { marginTop: value };
+      spacingSpells["marginBottom" + label] = { marginBottom: value };
+      spacingSpells["marginLeft" + label] = { marginLeft: value };
+      spacingSpells["marginRight" + label] = { marginRight: value };
+      spacingSpells["borderRadius" + label] = { borderRadius: value };
+    }
+
+  const paperColorTable = {
+    "": "#d2d2d2",
+    Dark: "#424242",
+  };
+
+  const paperColor = paperColorTable[themeName === "light" ? ""
+    : themeName.substring(0, 1).toUpperCase() + themeName.substring(1)
+  ] ?? "#d2d2d2";
+
   {/* console.log("makeThemeMagicBook", theme); */}
   return {
-    paper: {
-      light: {
-        backgroundColor: "#d2d2d2",
-      },
-      dark: {
-        backgroundColor: "#424242",
-      },
-    }[themeName] ?? {
-      backgroundColor: "#d2d2d2",
-    },
+    ...spacingSpells,
+    paper: { backgroundColor: paperColor },
     caption: theme.typography.caption,
     h3: theme.typography.h3,
     h4: theme.typography.h4,
     h5: theme.typography.h5,
     h6: theme.typography.h6,
     subtitle2: theme.typography.subtitle2,
-    colorPrimary: {
-      color: theme.palette.text.primary + " !important",
-    },
-    colorSecondary: {
-      color: theme.palette.text.secondary + " !important",
-    },
-    backgroundSuccess: {
-      backgroundColor: theme.palette.success.main,
-    },
-    backgroundWarning: {
-      backgroundColor: theme.palette.warning.main,
-    },
-    backgroundError: {
-      backgroundColor: theme.palette.error.main,
-    },
-    backgroundSuccessLight: {
-      backgroundColor: theme.palette.success.light,
-    },
-    backgroundWarningLight: {
-      backgroundColor: theme.palette.warning.light,
-    },
-    backgroundErrorLight: {
-      backgroundColor: theme.palette.error.light,
-    },
+    ...getTable("color", {
+      "": theme.palette.text.primary + " !important",
+      Secondary: theme.palette.text.secondary + " !important",
+      Success: theme.palette.success.main,
+      SucessLight: theme.palette.success.light,
+      Warning: theme.palette.warning.main,
+      WarningLight: theme.palette.warning.light,
+      "Error": theme.palette.error.main,
+      ErrorLight: theme.palette.error.light,
+    }),
+    ...getTable("background", {
+      "": paperColor,
+      Success: theme.palette.success.main,
+      SucessLight: theme.palette.success.light,
+      Warning: theme.palette.warning.main,
+      WarningLight: theme.palette.warning.light,
+      "Error": theme.palette.error.main,
+      ErrorLight: theme.palette.error.light,
+    }, "background-color"),
     borderLeftDivider: {
       borderLeft: "solid thin " + theme.palette.divider,
     },
     borderTopDivider: {
       borderTop: "solid thin " + theme.palette.divider,
     },
-    colorError: {
-      color: theme.palette.error.main,
-    },
-    colorErrorLight: {
-      color: theme.palette.error.light,
-    },
   };
 }
 
-const defaultTheme = createTheme();
+const spacingsTable = [
+  ["Smallest", "4px"],
+  ["Small", "8px"],
+  ["", "16px"],
+  ["Big", "32px"],
+  ["Biggest", "64px"],
+];
+
+const defaultSpacingFunc = a => spacingsTable[a];
+
+const defaultSpacing = [{
+  func: defaultSpacingFunc,
+  min: 0,
+  max: spacingsTable.length,
+  step: 1,
+}];
+
+const defaultTheme: Theme = (() => ({
+  ...createTheme(),
+  spacing: defaultSpacing,
+}))();
+
 export const themeMagicBook = makeThemeMagicBook("light", defaultTheme);
 
 export const defaultMagicBag = {
@@ -397,6 +336,7 @@ export function getThemeMagic(theme: string, getTheme: typeof getMagicTheme, get
     return mergeCache;
 
   const realTheme = getTheme(theme);
+  {/* console.log("getThemeMagic", theme, realTheme); */}
   cache[theme] = makeMagic(getStyle(theme, realTheme), "." + theme + " ");
   themeCache[theme] = realTheme;
   return mergeCache = merge(cache);

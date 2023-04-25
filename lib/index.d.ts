@@ -1,6 +1,5 @@
 import React from "react";
-import { Theme } from "@material-ui/core";
-import { MagicBook, MagicBag, Magic, Dependencies, WithThemeProps } from "./types";
+import { Theme, MagicBook, MagicBag, Magic, Dependencies, WithThemeProps } from "./types";
 
 declare function makeMagic(obj: object, reprefix: string): Magic;
 declare function makeThemeMagicBook(name: string, theme: Theme): MagicBook;

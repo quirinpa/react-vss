@@ -1,8 +1,20 @@
-import { Theme } from "@material-ui/core";
+import { Theme as MuiTheme } from "@material-ui/core";
 export type Css = { [key: string]: any };
 export type MagicBook = { [word: string]: Css };
 export type MagicBag = { [key: string]: MagicBook };
 export type Magic = { [word: string]: string };
+
+export
+interface SpacingOctave {
+  func?: Function;
+  min?: number;
+  max?: number;
+  step?: number;
+}
+
+export interface Theme extends Omit<MuiTheme, "spacing"> {
+  spacing?: SpacingOctave[];
+}
 
 export
 interface SimpleThemeProps {
