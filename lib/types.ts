@@ -1,6 +1,6 @@
 import { Theme } from "@material-ui/core";
 export type Cast = (phrase: string) => string;
-type Css = { [key: string]: any };
+export type Css = { [key: string]: any };
 export type MagicBook = { [word: string]: Css };
 export type Magic = { [word: string]: string };
 

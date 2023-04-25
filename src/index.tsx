@@ -1,126 +1,62 @@
 import React, { useContext } from "react";
-import { Cast, Magic, MagicClassesProps, CastProps, CastComponentProps, Dependencies, WithThemeProps } from "../lib/types";
+import { Cast, Css, Magic, MagicBook, MagicClassesProps, CastProps, CastComponentProps, Dependencies, WithThemeProps } from "../lib/types";
 import { createTheme, Theme } from "@material-ui/core";
 
-function cssTransform(thisKey: string, value: object) {
+export function dashCamelCase(camelCase: string) {
+  return camelCase.replace(/([A-Z0-9])+/g, function (g) { return "-" + g.toLowerCase(); })
+    .replace(/([0-9][a-z]+)/g, function (g) { return g.substring(0, 1) + "-" + g.substring(1); });
+}
+
+export function camelCaseDash(dash: string) {
+  return dash.replace(/-([a-zA-Z0-9])+/g, function (g) { return g.substring(1, 2).toUpperCase() + g.substring(2); });
+}
+
+function cssTransform(classes: Magic, content: Css, dashKey: string, value: Css, reprefix: string = "") {
+  {/* console.log("cssTransform", classes, content, dashKey, value, reprefix); */}
   if (!value)
     return [];
 
-  let classes: [string, object][] = [];
-  let thisValue = {};
-  let touched = false;
+  const fullKey = reprefix + dashKey;
+  let ret = "";
 
-  Object.entries(value).forEach(([key, value]) => {
-    if (key.charAt(0) == "&") {
-      const innerKey = thisKey + key.substring(1);
-      classes = classes.concat(cssTransform(innerKey, value));
-      return;
+  for (const [key, spell] of Object.entries(value)) {
+    if (key.indexOf(" ") === -1) {
+      if (!content[fullKey])
+        content[fullKey] = {};
+      content[fullKey][key] = spell;
+      continue;
     }
 
-    thisValue[key] = value;
-    touched = true;
-  });
+    const innerKey = fullKey + key.substring(1);
+    ret += cssTransform(classes, content, innerKey, spell, reprefix);
+  }
 
-  if (touched)
-    classes.push([
-      thisKey,
-      thisValue
-    ]);
+  {/* console.log("cssTransform check", content, fullKey); */}
+  if (content[fullKey]) {
+    if (fullKey.indexOf(" ") === -1)
+      classes[camelCaseDash(fullKey)] = fullKey;
+    ret += "." + fullKey + " {\n" + Object.entries(content[fullKey]).map(
+      ([key, value]: [string, any]) => dashCamelCase(key) + ": " + value.toString() + ";\n"
+    ).join("") + "}\n";
+  }
 
-  return classes;
+  return ret;
 }
 
-export function dashCamelCase(camelCase: string) {
-  return camelCase.replace(/([A-Z])/g, function (g) { return "-" + g.toLowerCase(); });
-}
-
-function makeMagic(obj: object, prefix = "styles") {
+function makeMagic(obj: object, prefix = "") {
+  const reprefix = prefix ? prefix + "-" : "";
   const style = document.createElement("style");
   let classes = {};
   let css = "";
 
-  Object.entries(obj).forEach(([key, value]) => {
-    cssTransform(key, value).forEach(([key, value]) => {
-      css += "." + prefix + "-" + key + " {\n" + Object.entries(value).map(
-        ([key, value]) => dashCamelCase(key) + ": " + value.toString() + ";\n"
-      ).join("") + "}\n";
+  for (const [key, value] of Object.entries(obj))
+    css += cssTransform(classes, {}, dashCamelCase(key), value, reprefix);
 
-      classes[key] = prefix + "-" + key;
-    });
-  });
-
+  {/* console.log("css", css); */}
   style.appendChild(document.createTextNode(css));
   style.type = "text/css";
   document.head.appendChild(style);
   return classes;
-}
-
-const LABELS = {
-  SIZE: "size",
-  HORIZONTAL: "horizontal",
-  VERTICAL: "vertical",
-  FULL: "full",
-  TEXT: "text",
-  ALIGN: "align",
-  ITEMS: "items",
-  ALIGN_ITEMS: "alignItems",
-  JUSTIFY_CONTENT: "justifyContent",
-  CENTER: "center",
-  START: "start",
-  END: "end",
-  SPACE_BETWEEN: "spaceBetween",
-  SMALL: "small",
-  FLEX: "flex",
-  WRAP: "wrap",
-  PAD: "pad",
-  TABLE: "table",
-  FONT_WEIGHT: "fontWeight",
-  BOLD: "bold",
-  NO: "no",
-  BLOCK: "block",
-  TABLE_LAYOUT: "tableLayout",
-  FIXED: "fixed",
-  COLOR: "color",
-  BACKGROUND: "background",
-  INHERIT: "inherit",
-  SUCCESS: "success",
-  WARNING: "warning",
-  ERROR: "error",
-  LIGHT: "light",
-  MARGIN: "margin",
-  POSITION: "position",
-  NEGATIVE: "neg",
-  LEFT: "left",
-  RIGHT: "right",
-  TOP: "top",
-  BOTTOM: "bottom",
-  ROTATE: "rotate",
-  PI: "pi",
-  OVER: "over",
-  TWO: "two",
-  OPACITY: "opacity",
-  WHITE: "white",
-  BLACK: "black",
-  OVERFLOW: "overflow",
-  ELLIPSIS: "ellipsis",
-  HIDDEN: "hidden",
-  AUTO: "auto",
-  MAX: "max",
-  SEVEN: "seven",
-  REM: "rem",
-};
-
-function lab(phrase: string) {
-  const ret = phrase.split(" ")
-    .map(word => {
-      const label = LABELS[word];
-      if (!label)
-        throw new Error("no label " + word);
-      return label.charAt(0).toUpperCase() + label.substr(1);
-    })
-    .join("");
-
-  return ret.charAt(0).toLowerCase() + ret.substring(1);
 }
 
 const horizontal0 = {
@@ -138,14 +74,14 @@ const vertical0 = {
   flexDirection: "column",
 };
 
-const preStyles = {
+const baseMagicBook = {
   horizontal0,
-  [LABELS.HORIZONTAL]: horizontal,
-  [lab("HORIZONTAL SMALL")]: {
+  horizontal,
+  horizontalSmall: {
     ...horizontal0,
     gap: "8px",
   },
-  [lab("BLOCK HORIZONTAL")]: {
+  blockHorizontal: {
     "& > *": {
       float: "left",
       marginLeft: "16px",
@@ -155,37 +91,37 @@ const preStyles = {
     },
   },
   vertical0,
-  [LABELS.VERTICAL]: {
+  vertical: {
     ...vertical0,
     rowGap: "16px",
   },
-  [lab("VERTICAL SMALL")]: {
+  verticalSmall: {
     ...vertical0,
     rowGap: "8px",
   },
-  [lab("PAD")]: {
+  pad: {
     padding: "16px",
   },
-  [lab("PAD SMALL")]: {
+  padSmall: {
     padding: "8px",
   },
-  [lab("PAD VERTICAL")]: {
+  padVertical: {
     paddingTop: "16px",
     paddingBottom: "16px",
   },
-  [lab("PAD VERTICAL SMALL")]: {
+  padVerticalSmall: {
     paddingTop: "8px",
     paddingBottom: "8px",
   },
-  [lab("PAD HORIZONTAL")]: {
+  padHorizontal: {
     paddingLeft: "16px",
     paddingRight: "16px",
   },
-  [lab("PAD HORIZONTAL SMALL")]: {
+  padHorizontalSmall: {
     paddingLeft: "8px",
     paddingRight: "8px",
   },
-  [lab("TABLE HORIZONTAL SMALL")]: {
+  tableHorizontalSmall: {
     "& th": {
       paddingLeft: "8px",
       paddingRight: "8px",
@@ -201,22 +137,22 @@ const preStyles = {
   absolute: {
     position: "absolute",
   },
-  [lab("POSITION TOP") + 0]: {
+  positionTop0: {
     top: 0,
   },
-  [lab("POSITION LEFT") + 0]: {
+  positionLeft0: {
     left: 0,
   },
-  [lab("POSITION RIGHT") + 0]: {
+  positionRight0: {
     right: 0,
   },
-  [lab("POSITION BOTTOM") + 0]: {
+  positionBottom0: {
     bottom: 0,
   },
-  [lab("POSITION RIGHT NEGATIVE")]: {
+  positionRightNeg: {
     right: "-16px",
   },
-  [lab("POSITION TOP NEGATIVE")]: {
+  positionTopNeg: {
     top: "-16px",
   },
   alignSelfStretch: {
@@ -231,34 +167,34 @@ const preStyles = {
   overflowHidden: {
     overflow: "hidden",
   },
-  [lab("ALIGN_ITEMS START")]: {
+  alignItemsStart: {
     alignItems: "flex-start",
   },
-  [lab("ALIGN_ITEMS END")]: {
+  alignItemsEnd: {
     alignItems: "flex-end",
   },
-  [lab("ALIGN_ITEMS CENTER")]: {
+  alignItemsCenter: {
     alignItems: "center",
   },
-  [lab("JUSTIFY_CONTENT CENTER")]: {
+  justifyContentCenter: {
     justifyContent: "center",
   },
-  [lab("JUSTIFY_CONTENT END")]: {
+  justifyContentEnd: {
     justifyContent: "flex-end",
   },
-  [lab("JUSTIFY_CONTENT SPACE_BETWEEN")]: {
+  justifyContentSpaceBetween: {
     justifyContent: "space-between",
   },
-  [lab("SIZE VERTICAL FULL")]: {
+  sizeVerticalFull: {
     height: "100%",
   },
-  [lab("SIZE MAX VERTICAL SEVEN REM")]: {
+  sizeMaxVertical7Rem: {
     maxHeight: "7rem",
   },
-  [lab("SIZE HORIZONTAL FULL")]: {
+  sizeHorizontalFull: {
     width: "100%",
   },
-  [lab("TEXT ALIGN CENTER")]: {
+  textAlignCenter: {
     textAlign: "center",
   },
   marginHorizontalNeg: {
@@ -293,47 +229,64 @@ const preStyles = {
     flexDirection: "column",
     justifyContent: "center",
   },
-  [lab("FLEX WRAP")]: {
+  flexWrap: {
     flexWrap: "wrap",
   },
-  [lab("TABLE_LAYOUT")]: {
+  tableLayout: {
     tableLayout: "fixed",
   },
-  [lab("TABLE_LAYOUT FIXED")]: {
+  tableLayoutFixed: {
     tableLayout: "fixed",
   },
-  [lab("COLOR INHERIT")]: {
+  colorInherit: {
     color: "inherit",
   },
-  [lab("BACKGROUND INHERIT")]: {
+  backgroundInherit: {
     backgroundColor: "inherit",
   },
-  [lab("BACKGROUND WHITE")]: {
+  backgroundWhite: {
     backgroundColor: "white",
   },
-  [lab("BACKGROUND BLACK")]: {
+  backgroundBlack: {
     backgroundColor: "black",
   },
-  [lab("MARGIN LEFT SMALL")]: {
+  marginLeftSmall: {
     marginLeft: "8px",
   },
-  [lab("MARGIN") + 0]: {
+  margin0: {
     margin: 0,
   },
-  [lab("OPACITY") + 3]: {
+  opacity3: {
     opacity: 0.3,
   },
-  [lab("OPACITY") + 5]: {
+  opacity5: {
     opacity: 0.5,
   },
-  [lab("OPACITY") + 8]: {
+  opacity8: {
     opacity: 0.8,
+  },
+  fontWeight:{
+    fontWeight: 600,
+  },
+  fontWeightBold: {
+    fontWeight: 600,
+  },
+  borderRadiusSmall: {
+    borderRadius: "8px",
+  },
+  rotate:{
+    transform: "rotate(90deg)",
+  },
+  rotatePiOverTwo: {
+    transform: "rotate(90deg)",
+  },
+  textOverflowEllipsis: {
+    textOverflow: "ellipsis",
   },
 };
 
-export function makeMagicBook(theme: Theme) {
+export function makeThemeMagicBook(theme: Theme) {
   return {
-    ...preStyles,
     caption: theme.typography.caption,
     h3: theme.typography.h3,
     h4: theme.typography.h4,
@@ -346,22 +299,22 @@ export function makeMagicBook(theme: Theme) {
     colorSecondary: {
       color: theme.palette.text.secondary + " !important",
     },
-    [lab("BACKGROUND SUCCESS")]: {
+    backgroundSuccess: {
       backgroundColor: theme.palette.success.main,
     },
-    [lab("BACKGROUND WARNING")]: {
+    backgroundWarning: {
       backgroundColor: theme.palette.warning.main,
     },
-    [lab("BACKGROUND ERROR")]: {
+    backgroundError: {
       backgroundColor: theme.palette.error.main,
     },
-    [lab("BACKGROUND SUCCESS LIGHT")]: {
+    backgroundSuccessLight: {
       backgroundColor: theme.palette.success.light,
     },
-    [lab("BACKGROUND WARNING LIGHT")]: {
+    backgroundWarningLight: {
       backgroundColor: theme.palette.warning.light,
     },
-    [lab("BACKGROUND ERROR LIGHT")]: {
+    backgroundErrorLight: {
       backgroundColor: theme.palette.error.light,
     },
     borderLeftDivider: {
@@ -370,42 +323,36 @@ export function makeMagicBook(theme: Theme) {
     borderTopDivider: {
       borderTop: "solid thin " + theme.palette.divider,
     },
-    [lab("FONT_WEIGHT")]: {
-      fontWeight: 600,
-    },
-    [lab("FONT_WEIGHT BOLD")]: {
-      fontWeight: 600,
-    },
-    borderRadiusSmall: {
-      borderRadius: "8px",
-    },
-    [lab("COLOR ERROR")]: {
+    colorError: {
       color: theme.palette.error.main,
     },
-    [lab("COLOR ERROR LIGHT")]: {
+    colorErrorLight: {
       color: theme.palette.error.light,
-    },
-    [lab("ROTATE")]: {
-      transform: "rotate(90deg)",
-    },
-    [lab("ROTATE PI OVER TWO")]: {
-      transform: "rotate(90deg)",
-    },
-    [lab("OVERFLOW HIDDEN")]: {
-      overflow: "hidden",
-    },
-    [lab("OVERFLOW AUTO")]: {
-      overflow: "auto",
-    },
-    [lab("TEXT OVERFLOW ELLIPSIS")]: {
-      textOverflow: "ellipsis",
     },
   };
 }
 
 const defaultTheme = createTheme();
-const defaultMagicBook = makeMagicBook(defaultTheme);
-const defaultMagic = makeMagic(defaultMagicBook);
+export const themeMagicBook = makeThemeMagicBook(defaultTheme);
+
+interface MagicBag {
+  [key: string]: MagicBook;
+}
+
+export const defaultMagicBag = { base: baseMagicBook, theme: themeMagicBook };
+
+export
+function merge(magicBag: MagicBag): MagicBook {
+  let ret = {};
+
+  for (const magicBook of Object.values(magicBag))
+    for (const [spellKey, spell] of Object.entries(magicBook))
+      ret[spellKey] = spell;
+
+  return ret;
+}
+
+export const defaultMagic = makeMagic(merge(defaultMagicBag));
 
 export
 const MagicContext = React.createContext<Magic>(defaultMagic);
@@ -461,7 +408,7 @@ export function withMagicClasses<P extends object>(Component: React.ComponentTyp
 
 export function withMagic(
   Component: React.ComponentType<object>,
-  getStyle: typeof makeMagicBook = makeMagicBook,
+  getStyle: typeof makeThemeMagicBook = makeThemeMagicBook,
   dependencies: Dependencies = {}
 ): React.FC<WithThemeProps>{
   return function WithMagic(props: WithThemeProps) {
@@ -476,5 +423,5 @@ export function withMagic(
     return (<Context.Provider value={magic}>
       <Component { ...rest } />
     </Context.Provider>);
-  }
+  };
 }

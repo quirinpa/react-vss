@@ -2,7 +2,7 @@ import React from "react";
 import { Theme } from "@material-ui/core";
 import { Cast, MagicBook, CastProps, MagicClassesProps, Magic, CastComponentProps, Dependencies, WithThemeProps } from "./types";
 
-declare function makeMagicBook(theme: Theme): MagicBook;
+declare function makeThemeMagicBook(theme: Theme): MagicBook;
 declare function useCast(Context: React.Context<Magic>|null): Cast;
 declare function withCast(Com: React.ComponentType<CastProps>): React.FC<CastComponentProps>;
 /*
@@ -16,7 +16,7 @@ declare function withMagicClasses<P extends object>(
 
 declare function withMagic(
   Component: React.ComponentType<object>,
-  getStyle?: typeof makeMagicBook,
+  getStyle?: typeof makeThemeMagicBook,
   dependencies?: Dependencies,
 ): React.FC<WithThemeProps>;
 
