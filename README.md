@@ -22,7 +22,7 @@ import { withMagic } from "@tty-pt/styles";
 
 function App() {
 	// the div will have a padding of 16px
-	// and its children will be separated by 16px
+	// and horizontal (and vertical) separatiions of 16px
 	return (<>
 		<div className="horizontal pad">
 			<span>1</span>
