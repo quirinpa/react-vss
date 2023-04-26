@@ -1,6 +1,15 @@
 import React from "react";
-import { Theme, SpacingOctave, Css, Magic, MagicBook, MagicBag, Dependencies, SimpleThemeProps, WithThemeProps } from "../lib/types";
+import { Theme, SpacingOctave, Css, Magic, MagicBook, Dependencies, SimpleThemeProps, WithThemeProps } from "../lib/types";
 import { createTheme } from "@material-ui/core";
+
+const debug = false;
+
+function echo(msg, value) {
+  if (debug)
+    console.log(msg, value);
+
+  return value;
+}
 
 export function dashCamelCase(camelCase: string) {
   return camelCase.replace(/([A-Z0-9])+/g, function (g) { return "-" + g.toLowerCase(); })
@@ -12,34 +21,35 @@ export function camelCaseDash(dash: string) {
 }
 
 function cssTransform(classes: Magic, content: Css, dashKey: string, value: Css, reprefix: string = "") {
-  {/* console.log("cssTransform", classes, content, dashKey, value, reprefix); */}
   if (!value)
-    return [];
+    return "";
 
-  const fullKey = reprefix + "." + dashKey;
   let ret = "";
 
   for (const [key, spell] of Object.entries(value)) {
     if (key.indexOf(" ") === -1) {
-      if (!content[fullKey])
-        content[fullKey] = {};
-      content[fullKey][key] = spell;
+      if (!content[dashKey])
+        content[dashKey] = {};
+      content[dashKey][key] = spell;
       continue;
     }
 
-    const innerKey = fullKey + key.substring(1);
-    ret += cssTransform(classes, content, innerKey, spell, reprefix);
+    ret += cssTransform(classes, content, dashKey + key.substring(1), spell, reprefix);
   }
 
-  {/* console.log("cssTransform check", content, fullKey); */}
-  if (content[fullKey]) {
-    if (dashKey.indexOf(" ") === -1)
-      classes[camelCaseDash(dashKey)] = dashKey;
-    ret += fullKey + " {\n" + Object.entries(content[fullKey]).map(
+  if (content[dashKey]) {
+    const camel = camelCaseDash(dashKey);
+    {/* if (dashKey.indexOf(" ") === -1) */}
+    if (!classes[camel])
+      classes[camel] = dashKey;
+    ret += reprefix + "." + dashKey + " {\n" + Object.entries(content[dashKey]).filter(
+      ([key]) => key.charAt(0) !== "&"
+    ).map(
       ([key, value]: [string, any]) => dashCamelCase(key) + ": " + value.toString() + ";\n"
     ).join("") + "}\n";
   }
 
+  {/* echo("cssTransform", [reprefix, dashKey, classes, content]); */}
   return ret;
 }
 
@@ -52,8 +62,7 @@ function makeMagic(obj: object, reprefix = "") {
   for (const [key, value] of Object.entries(obj))
     css += cssTransform(classes, {}, dashCamelCase(key), value, reprefix);
 
-  {/* console.log("css", css); */}
-  {/* console.log("added css sheet", reprefix); */}
+  echo("ADD STYLE\n",  css);
   style.appendChild(document.createTextNode(css));
   style.type = "text/css";
   document.head.appendChild(style);
@@ -63,12 +72,33 @@ function makeMagic(obj: object, reprefix = "") {
 const horizontal0 = { display: "flex", flexDirection: "initial" };
 const vertical0 = { display: "flex", flexDirection: "column" };
 
-function getTable(prefix, table, property?) {
-  const realProperty = property ?? dashCamelCase(prefix);
-  return Object.entries(table).reduce((a, [key, value]) => ({
+function reducer(allMagicTable, prefix, property, a, [key, value]) {
+  return key === "*" ? { ...a, magic: value } : {
     ...a,
-    [prefix + key]: { [realProperty]: value }
-  }), {});
+    [prefix + key]: { ...allMagicTable, [property]: value }
+  };
+}
+
+function recurseReducer(allMagicTable, prefix, a, [key, value]) {
+  return key === "*" ? a : {
+    ...a,
+    [prefix + key]: { ...allMagicTable, ...getMagicTable(prefix, value, "*") }
+  };
+}
+
+export
+function getMagicTable(prefix, table, property?) {
+  const realProperty = property ?? dashCamelCase(prefix);
+  const allMagicTable = table["*"] ?? {};
+
+  if (!table || typeof table !== "object")
+    return table;
+
+  return Object.entries(table).reduce(
+    (property !== "*" ? reducer.bind(null, allMagicTable, prefix, realProperty)
+      : recurseReducer.bind(null, allMagicTable, prefix)),
+    {}
+  );
 }
 
 const baseMagicBook = {
@@ -90,20 +120,20 @@ const baseMagicBook = {
   paddingLeft0: { paddingLeft: 0 },
   paddingRight0: { paddingRight: 0 },
   paddingBottom0: { paddingBottom: 0 },
-  ...getTable("alignSelf", {
+  ...getMagicTable("alignSelf", {
     "": "stretch",
   }),
   flexGrow: { flexGrow: 1 },
-  ...getTable("overflow", {
+  ...getMagicTable("overflow", {
     "": "auto",
     Hidden: "hidden",
   }),
-  ...getTable("alignItems", {
+  ...getMagicTable("alignItems", {
     "": "center",
     Start: "start",
     End: "end",
   }),
-  ...getTable("justifyContent", {
+  ...getMagicTable("justifyContent", {
     "": "center",
     Start: "start",
     SpaceBetween: "space-between",
@@ -114,15 +144,15 @@ const baseMagicBook = {
   sizeMaxVertical7Rem: {
     maxHeight: "7rem",
   },
-  ...getTable("textAlign", {
+  ...getMagicTable("textAlign", {
     Left: "left",
     "": "center",
     Right: "right",
   }),
-  ...getTable("cursorHorizontal", {
+  ...getMagicTable("cursorHorizontal", {
     "": "ew-resize"
   }, "cursor"),
-  ...getTable("cursorVertical", {
+  ...getMagicTable("cursorVertical", {
     "": "ns-resize"
   }, "cursor"),
   flexGrowChildren: { "& > *": { flexGrow: 1 } },
@@ -132,36 +162,44 @@ const baseMagicBook = {
     justifyContent: "center",
   },
   flexWrap: { flexWrap: "wrap" },
-  ...getTable("tableLayout", {
+  ...getMagicTable("tableLayout", {
     "": "fixed",
   }),
-  ...getTable("color", {
+  ...getMagicTable("color", {
     "": "inherit",
     White: "white",
     Black: "black",
   }),
-  ...getTable("background", {
+  ...getMagicTable("background", {
     "": "inherit",
     White: "white",
     Black: "black",
   }, "background-color"),
-  ...getTable("opacity", {
+  ...getMagicTable("opacity", {
     Smallest: 0.1,
     Small: 0.3,
     "": 0.5,
     Big: 0.8,
     Biggest: 1,
   }),
-  ...getTable("fontWeight", {
+  ...getMagicTable("fontWeight", {
     "": 600,
   }),
-  ...getTable("rotate", {
+  ...getMagicTable("rotate", {
     "": "rotate(90deg)",
   }, "transform"),
-  ...getTable("textOverflow", {
+  ...getMagicTable("textOverflow", {
     "": "ellipsis",
   }),
 };
+
+const baseMagic = makeMagic(baseMagicBook);
+
+let magicByTheme = {
+  "": baseMagic,
+};
+
+export let magic = merge(magicByTheme);
 
 export function makeThemeMagicBook(themeName: string, theme: Theme): MagicBook {
   const spacings: SpacingOctave[] = theme.spacing && typeof(theme.spacing) !== "string"
@@ -186,12 +224,12 @@ export function makeThemeMagicBook(themeName: string, theme: Theme): MagicBook {
       spacingSpells["padHorizontal" + label] = { paddingLeft: value, paddingRight: value };
       spacingSpells["tableHorizontal" + label] = {
         "& th": {
-          paddingLeft: "8px",
-          paddingRight: "8px",
+          paddingLeft: "calc(" + value + "/2)",
+          paddingRight: "calc(" + value + "/2)",
         },
         "& td": {
-          paddingLeft: "8px",
-          paddingRight: "8px",
+          paddingLeft: "calc(" + value + "/2)",
+          paddingRight: "calc(" + value + "/2)",
         }
       };
       spacingSpells["positionTop" + label] = { top: value };
@@ -224,8 +262,8 @@ export function makeThemeMagicBook(themeName: string, theme: Theme): MagicBook {
     : themeName.substring(0, 1).toUpperCase() + themeName.substring(1)
   ] ?? "#d2d2d2";
 
-  {/* console.log("makeThemeMagicBook", theme); */}
   return {
+    ...baseMagicBook,
     ...spacingSpells,
     paper: { backgroundColor: paperColor },
     caption: theme.typography.caption,
@@ -234,17 +272,17 @@ export function makeThemeMagicBook(themeName: string, theme: Theme): MagicBook {
     h5: theme.typography.h5,
     h6: theme.typography.h6,
     subtitle2: theme.typography.subtitle2,
-    ...getTable("color", {
+    ...getMagicTable("color", {
       "": theme.palette.text.primary + " !important",
       Secondary: theme.palette.text.secondary + " !important",
-      Success: theme.palette.success.main,
-      SucessLight: theme.palette.success.light,
-      Warning: theme.palette.warning.main,
-      WarningLight: theme.palette.warning.light,
-      "Error": theme.palette.error.main,
-      ErrorLight: theme.palette.error.light,
+      Success: theme.palette.success.main + "!important",
+      SucessLight: theme.palette.success.light + "!important",
+      Warning: theme.palette.warning.main + "!important",
+      WarningLight: theme.palette.warning.light + "!important",
+      "Error": theme.palette.error.main + "!important",
+      ErrorLight: theme.palette.error.light + "!important",
     }),
-    ...getTable("background", {
+    ...getMagicTable("background", {
       "": paperColor,
       Success: theme.palette.success.main,
       SucessLight: theme.palette.success.light,
@@ -253,10 +291,10 @@ export function makeThemeMagicBook(themeName: string, theme: Theme): MagicBook {
       "Error": theme.palette.error.main,
       ErrorLight: theme.palette.error.light,
     }, "background-color"),
-    borderLeftDivider: {
+    borderLeft: {
       borderLeft: "solid thin " + theme.palette.divider,
     },
-    borderTopDivider: {
+    borderTop: {
       borderTop: "solid thin " + theme.palette.divider,
     },
   };
@@ -284,10 +322,8 @@ const defaultTheme: Theme = (() => ({
   spacing: defaultSpacing,
 }))();
 
-export const themeMagicBook = makeThemeMagicBook("light", defaultTheme);
-
-export const defaultMagicBag = {
-  "": { ...baseMagicBook, ...themeMagicBook },
+let themeCache = {
+  "": defaultTheme,
 };
 
 export
@@ -302,26 +338,9 @@ function merge(obj: object) {
 }
 
 export
-function mergeBag(magicBag: MagicBag) {
-  let ret = {};
-
-  for (const [magicBookKey, magicBook] of Object.entries(magicBag))
-    for (const [magicKey, magic] of Object.entries(makeMagic(magicBook, magicBookKey)))
-      ret[magicKey] = magic;
-
-  return ret;
-}
-
-export const defaultMagic = mergeBag(defaultMagicBag);
-
-export
 function cast(phrase : string): string {
   return phrase.split(" ").map(camelCaseDash).join(" ");
 }
-
-let cache = {};
-let mergeCache = {};
-let themeCache = {};
 
 export
 function getMagicTheme(str) {
@@ -329,18 +348,18 @@ function getMagicTheme(str) {
 }
 
 export function getThemeMagic(theme: string, getTheme: typeof getMagicTheme, getStyle: typeof makeThemeMagicBook) {
-  {/* console.log("getThemeMagic", theme, getTheme, getStyle, cache); */}
-  const item = cache[theme];
+  const item = magicByTheme[theme];
 
   if (item)
-    return mergeCache;
+    return magic;
 
   const realTheme = getTheme(theme);
-  {/* console.log("getThemeMagic", theme, realTheme); */}
-  cache[theme] = makeMagic(getStyle(theme, realTheme), "." + theme + " ");
+  magicByTheme[theme] = makeMagic(getStyle(theme, realTheme), "." + theme + " ");
   themeCache[theme] = realTheme;
-  return mergeCache = merge(cache);
+  return echo("new Magic", merge(magicByTheme));
 }
+
+getThemeMagic("", getMagicTheme, makeThemeMagicBook);
 
 interface MagicBoxProps {
   theme?: string;
@@ -383,3 +402,5 @@ export function withMagic(
     </MagicBox>);
   };
 }
+
+echo("Magic", magic);

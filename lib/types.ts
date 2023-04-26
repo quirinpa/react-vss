@@ -1,7 +1,6 @@
 import { Theme as MuiTheme } from "@material-ui/core";
 export type Css = { [key: string]: any };
 export type MagicBook = { [word: string]: Css };
-export type MagicBag = { [key: string]: MagicBook };
 export type Magic = { [word: string]: string };
 
 export
