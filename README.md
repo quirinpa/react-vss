@@ -1,25 +1,45 @@
 # @tty-pt/styles
 > Cast your styles like a (good) wizard
 
-This library was made to combine the abilities of regular CSS with MUI's theming capabilities.
-It helps us use themed class names easily and directly, but ones that we can also customize.
+Your stack is full of bad vibes and old dependencies.<br />
+You are stuck with MUI v4 and react <17 because you are using JSS all over the place,<br />
+but new react no longer supports it.<br />
+Ok. So I have a trick for you: Why don't you use @tty-pt/styles?
 
-Class names tend to end up being intuitive, because they-are-just-dash-combinations.
-But they can also be customized from within javascript. In the future, we can even have them at build time.
+With styles, you can still use MUI v4 style JSS (and close JS interface),<br />
+while actually using v5 in the backend, and react 17.<br />
+Also, everything is done via regular CSS.<br />
+So no strange class names that are random and too specific - styles has good practices built into it.
 
-With this, it is easy to declare styles in a general manner, while it is still possible to be more specific.
-I hope you have fun.
+The tradeoff? For a while your app will be full of magic.<br />
+Meaning you will have a lot of places in your code where new CSS may be inserted (this happened with MUI v4 as well).
+
+But - it is a stepping stone.<br />
+You no longer have to update all of the code at once.<br />
+if you owed multiple libraries, you were out of luck until types.
+
+You can easily add Themes and global styles (and spells).
+
+As a plus, it is totally possible to keep cleaning up your code until you got<br />
+a stylesheet you can serve directly from the server.
+
+Eventually, you can move the styles dependency to live in one of your company's core react libs.<br />
+And remove all magic from your application code!
+
+Moreover, you can remove the styles dependency entirely in the end. And just use pre-baked CSS.<br />
+The next version will be react 17, at least!
 
 ## Installation
 ```sh
 npm i --save-dev @tty-pt/styles # if you are developing a library add it also as a peer dependency.
 ```
 
-## Simple Example
+## Simple example
 ```js
 import React from "react";
-import { withMagic } from "@tty-pt/styles";
+import "@tty-pt/styles"
 
+export default
 function App() {
 	// the div will have a padding of 16px
 	// and horizontal (and vertical) separatiions of 16px
@@ -31,53 +51,48 @@ function App() {
 		</div>
 	</>):
 }
-
-export default withMagic(App);
 ```
 
-## Customizing spells
+## Slightly more advanced example
 ```js
 import React from "react";
-import { withMagic, makeThemeMagicBook } from "@tty-pt/styles";
-import { createTheme } from "@material-ui/core";
+import { createTheme, makeMagic, withMagic } from "@tty-pt/styles";
 
 const theme = createTheme({
-	status: {
-		success: "#00ff00",
+	palette: {
+		status: {
+			success: "#00ff00",
+		}
 	}
 });
 
-function getMagicBook(theme) {
-	const magicBook = makeThemeMagicBook(theme);
+makeMagic({
+	horizontal: {
+		gap: "12px !important",
+	},
+});
 
-	return {
-		...magicBook,
-		// to modify the horizontal spell like this is actually not recommended.
-		// and it is just here to tell you that you can modify existing spells.
-		horizontal: {
-			...magicBook.horizontal,
-			gap: "12px",
-		},
+export default withMagic(function App() {
+	const [themeName, setThemeName] = useState("light");
+
+	useMagic(theme => ({
 		colorStatusSuccess: { // this is a new spell
 			color: theme.palette.status.success,
 	        }
-	}
-}
+	}));
 
-function App() {
-	return (<div className="horizontal">
+	function toggle() {
+		setTheme(theme === "light" ? "dark" : "light");
+	}
+
+	return (<div className={theme + " horizontal"}>
 		<span>hello<span>
 		<span className="color-status-success">world<span>
+		<button onClick={toggle}>test</button>
 	</div>):
-}
-
-function withTheme(Component) {
-	return function InnerComponent(props) {
-		<Component theme="light" />
-	};
-}
-
-export default withTheme(withMagic(App, { "@tty-pt/styles": { makeThemeMagicBook: getMagicBook }}));
+}, {
+	"@tty-pt/styles": { getTheme: () => theme },
+});
 ```
 This library is designed to be compatible with material-ui.
 There are other lower level APIs as well.

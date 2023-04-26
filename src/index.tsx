@@ -1,10 +1,13 @@
-import React from "react";
-import { Theme, SpacingOctave, Css, Magic, MagicBook, Dependencies, SimpleThemeProps, WithThemeProps } from "../lib/types";
-import { createTheme } from "@material-ui/core";
+import React, { useState, useEffect, useMemo } from "react";
+
+import {
+  Theme, SpacingOctave, Css, Magic, MagicBook,
+  WithThemeProps, WithClassesProps,
+} from "../lib/types";
 
 const debug = false;
 
-function echo(msg, value) {
+function echo(msg: string, value: any) {
   if (debug)
     console.log(msg, value);
 
@@ -21,13 +24,18 @@ export function camelCaseDash(dash: string) {
 }
 
 function cssTransform(classes: Magic, content: Css, dashKey: string, value: Css, reprefix: string = "") {
+  {/* echo("cssTransform", [dashKey]); */}
   if (!value)
     return "";
 
   let ret = "";
+  const firstChar = dashKey.charAt(0);
+  const noConvert = firstChar === "!" || firstChar === "?";
+  if (noConvert)
+    dashKey = dashKey.substring(1);
 
   for (const [key, spell] of Object.entries(value)) {
-    if (key.indexOf(" ") === -1) {
+    if (typeof spell !== "object") {
       if (!content[dashKey])
         content[dashKey] = {};
       content[dashKey][key] = spell;
@@ -38,15 +46,20 @@ function cssTransform(classes: Magic, content: Css, dashKey: string, value: Css,
   }
 
   if (content[dashKey]) {
-    const camel = camelCaseDash(dashKey);
+    const camel = noConvert ? dashKey : camelCaseDash(dashKey);
     {/* if (dashKey.indexOf(" ") === -1) */}
     if (!classes[camel])
       classes[camel] = dashKey;
-    ret += reprefix + "." + dashKey + " {\n" + Object.entries(content[dashKey]).filter(
+    const cssContent = Object.entries(content[dashKey]).filter(
       ([key]) => key.charAt(0) !== "&"
-    ).map(
-      ([key, value]: [string, any]) => dashCamelCase(key) + ": " + value.toString() + ";\n"
-    ).join("") + "}\n";
+    ).map(([key, value]: [string, any]) => dashCamelCase(key) + ": " + value.toString() + ";\n").join("");
+
+    if (noConvert && firstChar === "?") {
+      ret += dashKey + reprefix + " {\n" + cssContent + "}\n";
+    } else {
+      ret += reprefix + "." + dashKey + " {\n" + cssContent + "}\n";
+      ret += reprefix + " ." + dashKey + " {\n" + cssContent + "}\n";
+    }
   }
 
   {/* echo("cssTransform", [reprefix, dashKey, classes, content]); */}
@@ -54,13 +67,16 @@ function cssTransform(classes: Magic, content: Css, dashKey: string, value: Css,
 }
 
 export
-function makeMagic(obj: object, reprefix = "") {
+function makeMagic(obj: object, prefix?: string) {
+  const reprefix = prefix ?? "";
   const style = document.createElement("style");
   let classes = {};
   let css = "";
 
-  for (const [key, value] of Object.entries(obj))
-    css += cssTransform(classes, {}, dashCamelCase(key), value, reprefix);
+  for (const [key, value] of Object.entries(obj)) {
+    const firstChar = key.charAt(0);
+    css += cssTransform(classes, {}, firstChar === "!" || firstChar === "?" ? key : dashCamelCase(key), value, reprefix);
+  }
 
   echo("ADD STYLE\n",  css);
   style.appendChild(document.createTextNode(css));
@@ -101,6 +117,7 @@ function getMagicTable(prefix, table, property?) {
   );
 }
 
+export
 const baseMagicBook = {
   horizontal0,
   vertical0,
@@ -136,11 +153,14 @@ const baseMagicBook = {
   ...getMagicTable("justifyContent", {
     "": "center",
     Start: "start",
+    SpaceAround: "space-around",
     SpaceBetween: "space-between",
     End: "end",
   }),
   sizeVerticalFull: { height: "100%" },
   sizeHorizontalFull: { width: "100%" },
+  sizeHorizontalHalf: { width: "50%" },
+  sizeHorizontalQuarter: { width: "25%" },
   sizeMaxVertical7Rem: {
     maxHeight: "7rem",
   },
@@ -199,11 +219,15 @@ let magicByTheme = {
   "": baseMagic,
 };
 
+let mapByTheme = {
+  "": new Map<Function, true>(),
+};
 export let magic = merge(magicByTheme);
 
-export function makeThemeMagicBook(themeName: string, theme: Theme): MagicBook {
+export function makeThemeMagicBook(theme: Theme, themeName: string): MagicBook {
   const spacings: SpacingOctave[] = theme.spacing && typeof(theme.spacing) !== "string"
     ? theme.spacing : defaultSpacing;
+  echo("makeThemeMagicBook", [themeName, theme]);
 
   let spacingSpells = {};
 
@@ -251,21 +275,36 @@ export function makeThemeMagicBook(themeName: string, theme: Theme): MagicBook {
       spacingSpells["marginLeft" + label] = { marginLeft: value };
       spacingSpells["marginRight" + label] = { marginRight: value };
       spacingSpells["borderRadius" + label] = { borderRadius: value };
+      spacingSpells["sizeHorizontal" + label] = { width: value };
+      spacingSpells["sizeVertical" + label] = { height: value };
+      spacingSpells["size" + label] = { width: value, height: value };
     }
 
-  const paperColorTable = {
-    "": "#d2d2d2",
-    Dark: "#424242",
-  };
-
-  const paperColor = paperColorTable[themeName === "light" ? ""
-    : themeName.substring(0, 1).toUpperCase() + themeName.substring(1)
-  ] ?? "#d2d2d2";
-
   return {
+    "!MuiPaper-root": {
+      backgroundColor: theme.palette.background.paper,
+      color: theme.palette.text.primary,
+    },
+    "!MuiToolbar-root": {
+      backgroundColor: theme.palette.background.paper,
+      color: theme.palette.text.primary,
+    },
+    "!MuiIconButton-root": { color: theme.palette.primary.main + " !important" },
+    "!MuiInputBase-root": { color: theme.palette.text.primary + " !important" },
+    "?body": {
+      backgroundColor: theme.palette.background.default,
+      color: theme.palette.text.primary,
+    },
+    menuItem: {
+      ...baseMagicBook.vertical0,
+      padding: "8px",
+    },
+    paper: {
+      backgroundColor: theme.palette.background.paper,
+      color: theme.palette.text.primary,
+    },
     ...baseMagicBook,
     ...spacingSpells,
-    paper: { backgroundColor: paperColor },
     caption: theme.typography.caption,
     h3: theme.typography.h3,
     h4: theme.typography.h4,
@@ -283,7 +322,7 @@ export function makeThemeMagicBook(themeName: string, theme: Theme): MagicBook {
       ErrorLight: theme.palette.error.light + "!important",
     }),
     ...getMagicTable("background", {
-      "": paperColor,
+      "": theme.palette.background.paper,
       Success: theme.palette.success.main,
       SucessLight: theme.palette.success.light,
       Warning: theme.palette.warning.main,
@@ -300,6 +339,8 @@ export function makeThemeMagicBook(themeName: string, theme: Theme): MagicBook {
   };
 }
 
+let themeCache = {};
+
 const spacingsTable = [
   ["Smallest", "4px"],
   ["Small", "8px"],
@@ -315,16 +356,147 @@ const defaultSpacing = [{
   min: 0,
   max: spacingsTable.length,
   step: 1,
-}];
+}] as [SpacingOctave, ...SpacingOctave[]];
 
-const defaultTheme: Theme = (() => ({
-  ...createTheme(),
+export
+const defaultTheme: Theme = {
+  palette: {
+    type: "light",
+    primary: {
+      light: "#42a5f5",
+      main: "#1976d2",
+      dark: "#1565c0",
+      contrastText: "rgba(0, 0, 0, 0.87)"
+    },
+    secondary: {
+      light: "#ba68c8",
+      main: "#9c27b0",
+      dark: "#7b1fa2",
+      contrastText: "#fff"
+    },
+    error: {
+      light: "#ef5350",
+      main: "#d32f2f",
+      dark: "#c62828",
+      contrastText: "#fff"
+    },
+    warning: {
+      light: "#ff9800",
+      main: "#ed6c02",
+      dark: "#e65100",
+      contrastText: "rgba(0, 0, 0, 0.87)"
+    },
+    info: {
+      light: "#03a9f4",
+      main: "#0288d1",
+      dark: "#01579b",
+      contrastText: "#fff"
+    },
+    success: {
+      light: "#4caf50",
+      main: "#2e7d32",
+      dark: "#1b5e20",
+      contrastText: "rgba(0, 0, 0, 0.87)"
+    },
+    divider: "rgba(255, 255, 255, 0.12)",
+    text: {
+      primary: "#fff",
+      secondary: "rgba(255, 255, 255, 0.7)",
+      // disabled: "rgba(255, 255, 255, 0.5)",
+      // hint: "rgba(255, 255, 255, 0.5)",
+      // icon: "rgba(255, 255, 255, 0.5)"
+    },
+    background: {
+      paper: "#d2d2d2",
+      default: "#303030",
+      // primary: "#424242",
+      // secondary: "#212121"
+    },
+  },
+  typography: {
+    htmlFontSize: 16,
+    fontFamily: "Open Sans",
+    fontSize: 14,
+    h1: {
+      fontFamily: "Open Sans",
+      fontSize: "6rem",
+      fontWeight: 300
+    },
+    h2: {
+      fontFamily: "Open Sans",
+      fontSize: "3.75rem",
+      lineHeight: 1.2,
+      fontWeight: 300
+    },
+    h3: {
+      fontFamily: "Open Sans",
+      fontSize: "3rem",
+      fontWeight: 400,
+      lineHeight: 1.167
+    },
+    h4: {
+      fontFamily: "Open Sans",
+      fontSize: "2.125rem",
+      fontWeight: 400,
+      lineHeight: 1.235
+    },
+    h5: {
+      fontFamily: "Open Sans",
+      fontSize: "1.5rem",
+      fontWeight: 400,
+      lineHeight: 1.334
+    },
+    h6: {
+      fontFamily: "Open Sans",
+      fontWeight: 500,
+      fontSize: "1.25rem",
+      lineHeight: 1.6,
+    },
+    // subtitle1: {
+    //   fontSize: "1rem",
+    //   lineHeight: 1.75
+    // },
+    subtitle2: {
+      fontFamily: "Open Sans",
+      fontWeight: 500,
+      fontSize: "0.875rem",
+      lineHeight: 1.57
+    },
+    // body1: {
+    //   fontFamily: "Roboto",
+    //   fontSize: "1rem",
+    //   lineHeight: 1.5
+    // },
+    // body2: {
+    //   fontFamily: "Open Sans",
+    //   fontWeight: 400,
+    //   fontSize: "0.875rem",
+    //   lineHeight: 1.43
+    // },
+    // button: {
+    //   fontWeight: 500,
+    //   fontSize: "0.875rem",
+    //   lineHeight: 1.75,
+    //   textTransform: "uppercase"
+    // },
+    caption: {
+      fontFamily: "Open Sans",
+      fontWeight: 400,
+      fontSize: "0.75rem",
+      lineHeight: 1.66
+    },
+    // overline: {
+    //   fontFamily: "Open Sans",
+    //   fontWeight: 400,
+    //   fontSize: "0.75rem",
+    //   lineHeight: 2.66,
+    //   textTransform: "uppercase"
+    // }
+  },
   spacing: defaultSpacing,
-}))();
-
-let themeCache = {
-  "": defaultTheme,
 };
+
+themeCache[""] = defaultTheme;
 
 export
 function merge(obj: object) {
@@ -342,65 +514,108 @@ function cast(phrase : string): string {
   return phrase.split(" ").map(camelCaseDash).join(" ");
 }
 
-export
-function getMagicTheme(str) {
-  return themeCache[str] ?? defaultTheme;
+export function defaultGetTheme(name) {
+  return themeCache[name];
 }
 
-export function getThemeMagic(theme: string, getTheme: typeof getMagicTheme, getStyle: typeof makeThemeMagicBook) {
-  const item = magicByTheme[theme];
+let getTheme = defaultGetTheme;
 
-  if (item)
+export function registerGetTheme(argGetTheme: typeof defaultGetTheme) {
+  getTheme = argGetTheme;
+}
+
+export function getThemeMagic(themeName: string, getStyle: typeof makeThemeMagicBook, addPrefix: string = "") {
+  const map = mapByTheme[themeName];
+
+  if (map && map.has(getStyle))
     return magic;
 
-  const realTheme = getTheme(theme);
-  magicByTheme[theme] = makeMagic(getStyle(theme, realTheme), "." + theme + " ");
-  themeCache[theme] = realTheme;
+  const theme = getTheme(themeName) ?? defaultTheme;
+
+  magicByTheme[themeName] = {
+    ...(magicByTheme[themeName] ?? {}),
+    ...makeMagic(
+      getStyle(theme, themeName),
+      (themeName ? "." + themeName : "") + (addPrefix ? " ." + addPrefix : addPrefix),
+    ),
+  };
+
+  if (!mapByTheme[themeName]) {
+    mapByTheme[themeName] = new Map<Function, true>();
+    themeCache[themeName] = theme;
+  }
+
+  mapByTheme[themeName].set(getStyle, true);
   return echo("new Magic", merge(magicByTheme));
 }
 
-getThemeMagic("", getMagicTheme, makeThemeMagicBook);
+let currentTheme = "";
+const subs: Map<Function, true> = new Map<Function, true>();
 
-interface MagicBoxProps {
-  theme?: string;
-  getTheme?: typeof getMagicTheme;
-  getStyle?: typeof makeThemeMagicBook;
-  dependencies?: Dependencies;
-  className?: string;
-}
+export
+function themeSubscribe(setTheme: (_name: string) => void) {
+  subs.set(setTheme, true);
 
-export function MagicBox(props: React.PropsWithChildren<MagicBoxProps>) {
-  const {
-    theme, children, getTheme, getStyle,
-    dependencies = {}, className, ...rest
-  } = props;
-
-  (dependencies?.["@tty-pt/styles"]?.getThemeMagic ?? getThemeMagic)(
-    theme ?? "light",
-    getTheme ?? dependencies?.["@tty-pt/styles"]?.getMagicTheme ?? getMagicTheme,
-    getStyle ?? dependencies?.["@tty-pt/styles"]?.makeThemeMagicBook ?? makeThemeMagicBook,
-  );
-
-  return (<div className={className + " " + theme} { ...rest } >
-    { children }
-  </div>);
-}
-
-export function withMagic(
-  Component: React.ComponentType<SimpleThemeProps>,
-  dependencies?: Dependencies,
-): React.ComponentType<WithThemeProps>{
-  return function WithMagicBox(props: WithThemeProps) {
-    const { theme, className, ...rest } = props;
-
-    return (<MagicBox
-      theme={theme}
-      className={className}
-      dependencies={dependencies}
-    >
-      <Component theme={theme} { ...rest } />
-    </MagicBox>);
+  return () => {
+    subs.delete(setTheme);
   };
 }
 
-echo("Magic", magic);
+themeSubscribe(name => currentTheme = name);
+
+export function useTheme() {
+  const [theme, setTheme] = useState(currentTheme);
+  useEffect(() => themeSubscribe(setTheme), []);
+  return theme;
+}
+
+interface MagicBoxProps extends WithThemeProps {
+  theme?: string;
+  getStyle?: typeof makeThemeMagicBook;
+  Component: React.ComponentType<WithThemeProps>;
+}
+
+export function MagicBox(props: MagicBoxProps) {
+  const { theme, Component, getStyle, ...rest } = props;
+
+  for (let [sub] of subs)
+    sub(theme);
+
+  magic = getThemeMagic(theme ?? "", getStyle ?? makeThemeMagicBook);
+  return <Component theme={theme} { ...rest } />;
+}
+
+// export this if you need to - to avoid problems with dependency duplication
+// when you have multiple versions of this lib in your node_modules
+export function withMagic(
+  Component: React.ComponentType<WithThemeProps>,
+  getStyle?: typeof makeThemeMagicBook,
+): React.ComponentType<WithThemeProps>{
+  return function WithMagicBox(props: WithThemeProps) {
+    const { theme, ...rest } = props;
+
+    return (<MagicBox
+      Component={Component}
+      theme={theme}
+      getStyle={getStyle}
+      { ...rest }
+    />);
+  };
+}
+
+export function bindMagic(getStyle?: typeof makeThemeMagicBook, addPrefix?: string) {
+  return () => {
+    const themeName = useTheme();
+    return useMemo(() => magic = getThemeMagic(themeName || currentTheme, getStyle ?? makeThemeMagicBook, addPrefix), [themeName]);
+  }
+}
+
+export function withStyles(
+  Component: React.ComponentType<WithClassesProps>
+) {
+  const getStyles = bindMagic();
+  return function WithClasses(props: object) {
+    const mag = getStyles();
+    return <Component classes={mag} { ...props } />;
+  };
+}
