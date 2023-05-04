@@ -18,6 +18,8 @@ declare function withMagic(
 // almost drop-in replacement form MUI v4 makeStyles
 declare function bindMagic(getStyle?: typeof makeThemeMagicBook, reprefix: string): Magic;
 
+export function useMagic(getStyle?: typeof makeThemeMagicBook, addPrefix?: any): Magic;
+
 declare function registerGetTheme(argGetTheme: () => string): void;
 
 declare function themeSubscribe(setTheme: (name: string) => void): () => {};

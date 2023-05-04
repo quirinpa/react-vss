@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 
 import {
-  Theme, SpacingOctave, Css, Magic, MagicBook,
+  Theme, Octave, OptOctave, Css, Magic, MagicBook,
   WithThemeProps, WithClassesProps,
 } from "../lib/types";
 
@@ -30,7 +30,7 @@ function cssTransform(classes: Magic, content: Css, dashKey: string, value: Css,
 
   let ret = "";
   const firstChar = dashKey.charAt(0);
-  const noConvert = firstChar === "!" || firstChar === "?";
+  const noConvert = firstChar === "!" || firstChar === "?" || firstChar === "%";
   if (noConvert)
     dashKey = dashKey.substring(1);
 
@@ -51,15 +51,22 @@ function cssTransform(classes: Magic, content: Css, dashKey: string, value: Css,
     if (!classes[camel])
       classes[camel] = dashKey;
     const cssContent = Object.entries(content[dashKey]).filter(
-      ([key]) => key.charAt(0) !== "&"
+      ([key, value]) => key.charAt(0) !== "&" && value !== undefined
     ).map(([key, value]: [string, any]) => dashCamelCase(key) + ": " + value.toString() + ";\n").join("");
 
-    if (noConvert && firstChar === "?") {
-      ret += dashKey + reprefix + " {\n" + cssContent + "}\n";
-    } else {
-      ret += reprefix + "." + dashKey + " {\n" + cssContent + "}\n";
-      ret += reprefix + " ." + dashKey + " {\n" + cssContent + "}\n";
+    if (noConvert) {
+      switch (firstChar) {
+      case '?':
+        ret += dashKey + reprefix + " {\n" + cssContent + "}\n";
+        return ret;
+      case '%':
+        ret += dashKey + " {\n" + cssContent + "}\n";
+      default: break;
+      }
     }
+
+    ret += reprefix + "." + dashKey + " {\n" + cssContent + "}\n";
+    ret += reprefix + " ." + dashKey + " {\n" + cssContent + "}\n";
   }
 
   {/* echo("cssTransform", [reprefix, dashKey, classes, content]); */}
@@ -158,9 +165,15 @@ const baseMagicBook = {
     End: "end",
   }),
   sizeVerticalFull: { height: "100%" },
+  minSizeVerticalFull: { minHeight: "100%" },
+  minSizeVerticalFullView: { minHeight: "100vh" },
+  maxSizeVerticalFull: { maxHeight: "100%" },
   sizeHorizontalFull: { width: "100%" },
+  minSizeHorizontalFull: { minWidth: "100%" },
+  maxSizeHorizontalFull: { maxWidth: "100%" },
   sizeHorizontalHalf: { width: "50%" },
   sizeHorizontalQuarter: { width: "25%" },
+  sizeHorizontalThreeFourths: { width: "75%" },
   sizeMaxVertical7Rem: {
     maxHeight: "7rem",
   },
@@ -224,29 +237,54 @@ let mapByTheme = {
 };
 export let magic = merge(magicByTheme);
 
+function octaveDefaults(opt: OptOctave, defaults: Octave) {
+  return {
+    min: opt.min ?? defaults.min,
+    func: opt.func ?? defaults.func,
+    length: opt.length ?? defaults.length,
+  }
+}
+
+interface OptColor {
+  light?: string;
+  main?: string;
+  dark?: string;
+}
+
 export function makeThemeMagicBook(theme: Theme, themeName: string): MagicBook {
-  const spacings: SpacingOctave[] = theme.spacing && typeof(theme.spacing) !== "string"
-    ? theme.spacing : defaultSpacing;
-  echo("makeThemeMagicBook", [themeName, theme]);
+  const spacings: OptOctave<any>[] = theme.spacing ?? defaultSpacing;
+  const fontSizes: OptOctave<any>[] = theme.typography.fontSize ?? defaultFontSize;
+  const colors: Octave<OptColor>[] = theme.palette.color ?? defaultColor;
+  echo("makeThemeMagicBook", theme, [themeName, theme]);
 
-  let spacingSpells = {};
+  let dynamic = {};
 
-  for (const spacing of spacings)
-    for (let i = (spacing.min ?? 0); i < (spacing.max ?? spacingsTable.length); i += (spacing.step ?? 1)) {
-      const [label, value] = (spacing.func ?? defaultSpacingFunc)(i);
-      spacingSpells["horizontal" + label] = { ...horizontal0, gap: value };
-      spacingSpells["blockHorizontal" + label] = {
+  for (const opt of spacings) {
+    const octave = octaveDefaults(opt, defaultSpacingOctave);
+
+    for (let i = octave.min; i < octave.length; i += 1) {
+      const [label, value] = (octave.func ?? defaultSpacingFunc)(i);
+      dynamic["horizontal" + label] = { ...horizontal0, gap: value };
+      dynamic["blockHorizontal" + label] = {
         "& > *": {
           float: "left",
           marginLeft: value,
           "&:first": { marginLeft: "0px" }
         },
       };
-      spacingSpells["vertical" + label] = { ...vertical0, rowGap: value };
-      spacingSpells["pad" + label] = { padding: value };
-      spacingSpells["padVertical" + label] = { paddingTop: value, paddingBottom: value };
-      spacingSpells["padHorizontal" + label] = { paddingLeft: value, paddingRight: value };
-      spacingSpells["tableHorizontal" + label] = {
+      dynamic["vertical" + label] = { ...vertical0, rowGap: value };
+      dynamic["pad" + label] = { padding: value };
+      dynamic["padVertical" + label] = { paddingTop: value, paddingBottom: value };
+      dynamic["padHorizontal" + label] = { paddingLeft: value, paddingRight: value };
+      dynamic["padTop" + label] = { paddingTop: value };
+      dynamic["padBottom" + label] = { paddingBottom: value };
+      dynamic["padLeft" + label] = { paddingLeft: value };
+      dynamic["padRight" + label] = { paddingRight: value };
+      dynamic["padTop" + label + "Neg"] = { paddingBottom: value, paddingLeft: value, paddingRight: value };
+      dynamic["padBottom" + label + "Neg"] = { paddingTop: value, paddingLeft: value, paddingRight: value };
+      dynamic["padLeft" + label + "Neg"] = { paddingTop: value, paddingBottom: value, paddingRight: value };
+      dynamic["padRight" + label + "Neg"] = { paddingTop: value, paddingBottom: value, paddingLeft: value };
+      dynamic["tableHorizontal" + label] = {
         "& th": {
           paddingLeft: "calc(" + value + "/2)",
           paddingRight: "calc(" + value + "/2)",
@@ -256,28 +294,49 @@ export function makeThemeMagicBook(theme: Theme, themeName: string): MagicBook {
           paddingRight: "calc(" + value + "/2)",
         }
       };
-      spacingSpells["positionTop" + label] = { top: value };
-      spacingSpells["positionBottom" + label] = { bottom: value };
-      spacingSpells["positionLeft" + label] = { left: value };
-      spacingSpells["positionRight" + label] = { right: value };
-      spacingSpells["positionTop" + label + "Neg"] = { top: "-" + value };
-      spacingSpells["positionBottom" + label + "Neg"] = { bottom: "-" + value };
-      spacingSpells["positionLeft" + label + "Neg"] = { left: "-" + value };
-      spacingSpells["positionRight" + label + "Neg"] = { right: "-" + value };
-      spacingSpells["margin" + label] = { margin: value };
-      spacingSpells["marginNeg" + label] = { margin: "-" + value };
-      spacingSpells["marginVertical" + label] = { marginTop: value, marginBottom: value };
-      spacingSpells["marginHorizontal" + label] = { marginLeft: value, marginRight: value };
-      spacingSpells["marginVertical" + label + "Neg"] = { marginTop: "-" + value, marginBottom: "-" + value };
-      spacingSpells["marginHorizontal" + label + "Neg"] = { marginLeft: "-" + value, marginRight: "-" + value };
-      spacingSpells["marginTop" + label] = { marginTop: value };
-      spacingSpells["marginBottom" + label] = { marginBottom: value };
-      spacingSpells["marginLeft" + label] = { marginLeft: value };
-      spacingSpells["marginRight" + label] = { marginRight: value };
-      spacingSpells["borderRadius" + label] = { borderRadius: value };
-      spacingSpells["sizeHorizontal" + label] = { width: value };
-      spacingSpells["sizeVertical" + label] = { height: value };
-      spacingSpells["size" + label] = { width: value, height: value };
+      dynamic["positionTop" + label] = { top: value };
+      dynamic["positionBottom" + label] = { bottom: value };
+      dynamic["positionLeft" + label] = { left: value };
+      dynamic["positionRight" + label] = { right: value };
+      dynamic["positionTop" + label + "Neg"] = { top: "-" + value };
+      dynamic["positionBottom" + label + "Neg"] = { bottom: "-" + value };
+      dynamic["positionLeft" + label + "Neg"] = { left: "-" + value };
+      dynamic["positionRight" + label + "Neg"] = { right: "-" + value };
+      dynamic["margin" + label] = { margin: value };
+      dynamic["marginNeg" + label] = { margin: "-" + value };
+      dynamic["marginVertical" + label] = { marginTop: value, marginBottom: value };
+      dynamic["marginHorizontal" + label] = { marginLeft: value, marginRight: value };
+      dynamic["marginVertical" + label + "Neg"] = { marginTop: "-" + value, marginBottom: "-" + value };
+      dynamic["marginHorizontal" + label + "Neg"] = { marginLeft: "-" + value, marginRight: "-" + value };
+      dynamic["marginTop" + label] = { marginTop: value };
+      dynamic["marginBottom" + label] = { marginBottom: value };
+      dynamic["marginLeft" + label] = { marginLeft: value };
+      dynamic["marginRight" + label] = { marginRight: value };
+      dynamic["borderRadius" + label] = { borderRadius: value };
+      dynamic["sizeHorizontal" + label] = { width: value };
+      dynamic["sizeVertical" + label] = { height: value };
+      dynamic["size" + label] = { width: value, height: value };
+    }
+  }
+
+  for (const opt of fontSizes) {
+    const octave = octaveDefaults(opt, defaultFontSizeOctave);
+
+    for (let i = octave.min; i < octave.length; i += 1) {
+      const [label, value] = octave.func(i);
+      dynamic["fontSize" + label] = { fontSize: value };
+    }
+  }
+
+  for (const octave of colors)
+    for (let i = octave.min ?? 0; i < octave.length; i += 1) {
+      const [label, value] = octave.func(i);
+      if (value.main)
+        dynamic["color" + label] = { color: value.main };
+      if (value.light)
+        dynamic["color" + label + "Light"] = { color: value.light };
+      if (value.dark)
+        dynamic["color" + label + "Dark"] = { color: value.dark };
     }
 
   return {
@@ -295,6 +354,9 @@ export function makeThemeMagicBook(theme: Theme, themeName: string): MagicBook {
       backgroundColor: theme.palette.background.default,
       color: theme.palette.text.primary,
     },
+    "!MuiFormLabel-colorPrimary": {
+      color: theme.palette.text.primary,
+    },
     menuItem: {
       ...baseMagicBook.vertical0,
       padding: "8px",
@@ -303,8 +365,7 @@ export function makeThemeMagicBook(theme: Theme, themeName: string): MagicBook {
       backgroundColor: theme.palette.background.paper,
       color: theme.palette.text.primary,
     },
-    ...baseMagicBook,
-    ...spacingSpells,
+    ...dynamic,
     caption: theme.typography.caption,
     h3: theme.typography.h3,
     h4: theme.typography.h4,
@@ -320,6 +381,8 @@ export function makeThemeMagicBook(theme: Theme, themeName: string): MagicBook {
       WarningLight: theme.palette.warning.light + "!important",
       "Error": theme.palette.error.main + "!important",
       ErrorLight: theme.palette.error.light + "!important",
+      "Info": theme.palette.info.main + "!important",
+      InfoLight: theme.palette.info.light + "!important",
     }),
     ...getMagicTable("background", {
       "": theme.palette.background.paper,
@@ -351,17 +414,50 @@ const spacingsTable = [
 
 const defaultSpacingFunc = a => spacingsTable[a];
 
-const defaultSpacing = [{
+const defaultSpacingOctave = {
   func: defaultSpacingFunc,
   min: 0,
-  max: spacingsTable.length,
-  step: 1,
-}] as [SpacingOctave, ...SpacingOctave[]];
+  length: spacingsTable.length,
+};
+
+const defaultSpacing = [defaultSpacingOctave] as [SpacingOctave, ...SpacingOctave[]];
+
+const defaultFontSizeTable = [
+  [9, "9px"],
+  [11, "11px"],
+  [14, "14px"],
+  [17, "17px"],
+  [20, "20px"],
+  [26, "26px"],
+  [33, "33px"],
+  [42, "42px"],
+  [54, "54px"],
+  [69, "69px"],
+  [89, "89px"],
+  [111, "111px"],
+  [138, "138px"],
+];
+
+function defaultFontSizeFunc(x: number) {
+  return defaultFontSizeTable[x];
+}
+
+const defaultFontSizeOctave = {
+  func: defaultFontSizeFunc,
+  min: 0,
+  length: defaultFontSizeTable.length,
+  // max: defaultFontSizeMax, size of labels
+};
+
+const defaultFontSize = [defaultFontSizeOctave] as [FontSizeOctave, ...FontSizeOctave[]];
+
+const defaultColor = [];
 
 export
 const defaultTheme: Theme = {
   palette: {
     type: "light",
+    color: defaultColor,
     primary: {
       light: "#42a5f5",
       main: "#1976d2",
@@ -416,7 +512,7 @@ const defaultTheme: Theme = {
   typography: {
     htmlFontSize: 16,
     fontFamily: "Open Sans",
-    fontSize: 14,
+    fontSize: defaultFontSize,
     h1: {
       fontFamily: "Open Sans",
       fontSize: "6rem",
@@ -603,6 +699,12 @@ export function withMagic(
   };
 }
 
+export function useMagic(getStyle?: typeof makeThemeMagicBook, addPrefix?: any) {
+  const themeName = useTheme();
+  return magic = getThemeMagic(themeName || currentTheme, getStyle ?? makeThemeMagicBook, addPrefix);
+}
+
+
 export function bindMagic(getStyle?: typeof makeThemeMagicBook, addPrefix?: string) {
   return () => {
     const themeName = useTheme();
@@ -618,4 +720,43 @@ export function withStyles(
     const mag = getStyles();
     return <Component classes={mag} { ...props } />;
   };
+}
+
+function _useResponsive(width, name, S, Sp, Op, max = 4): number {
+  const [W, N] = useMemo(() => {
+    // with (a little) help from chat GPT.
+    const W = width - Op;
+    const D1 = S + Sp;
+    return [W, Math.min(max, Math.floor((W + Sp) / D1))];
+  }, [width]);
+
+  useMagic(useCallback((theme, themeName) => {
+    // with (a little) help from chat GPT.
+    const DP = W - N * S - (N - 1) * Sp;
+    const P = DP / 2;
+
+    return {
+      ["sizeHorizontal" + N + name]: {
+        width: (W - DP) + "px",
+      },
+    };
+  }, [N, W]));
+
+  return N;
+}
+
+export function
+useResponsive(el, name, S, Sp, Op, max): number {
+  const [width, setWidth] = useState(el.clientWidth);
+
+  const outputSize = useCallback(() => {
+    setWidth(el.clientWidth);
+  }, [setWidth]);
+
+  useEffect(() => {
+    outputSize();
+    new ResizeObserver(outputSize).observe(el)
+  }, []);
+
+  return _useResponsive(width, name, S, Sp, Op, max);
 }
