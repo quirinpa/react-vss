@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 
 import {
   Theme, Octave, OptOctave, Css, Magic, MagicBook,
@@ -95,22 +95,26 @@ function makeMagic(obj: object, prefix?: string) {
 const horizontal0 = { display: "flex", flexDirection: "initial" };
 const vertical0 = { display: "flex", flexDirection: "column" };
 
-function reducer(allMagicTable, prefix, property, a, [key, value]) {
+interface MagicTable {
+  [key: string]: any;
+}
+
+function reducer(allMagicTable: MagicTable, prefix: string, property: string, a, [key, value]) {
   return key === "*" ? { ...a, magic: value } : {
     ...a,
     [prefix + key]: { ...allMagicTable, [property]: value }
   };
 }
 
-function recurseReducer(allMagicTable, prefix, a, [key, value]) {
+function recurseReducer(allMagicTable: MagicTable, prefix: string, a: MagicBook, [key, value]) {
   return key === "*" ? a : {
     ...a,
-    [prefix + key]: { ...allMagicTable, ...getMagicTable(prefix, value, "*") }
+    [prefix + key]: { ...allMagicTable, ...drawMagicTable(prefix, value, "*") }
   };
 }
 
 export
-function getMagicTable(prefix, table, property?) {
+function drawMagicTable(prefix: string, table: MagicTable, property?: string) {
   const realProperty = property ?? dashCamelCase(prefix);
   const allMagicTable = table["*"] ?? {};
 
@@ -144,20 +148,20 @@ const baseMagicBook = {
   paddingLeft0: { paddingLeft: 0 },
   paddingRight0: { paddingRight: 0 },
   paddingBottom0: { paddingBottom: 0 },
-  ...getMagicTable("alignSelf", {
+  ...drawMagicTable("alignSelf", {
     "": "stretch",
   }),
   flexGrow: { flexGrow: 1 },
-  ...getMagicTable("overflow", {
+  ...drawMagicTable("overflow", {
     "": "auto",
     Hidden: "hidden",
   }),
-  ...getMagicTable("alignItems", {
+  ...drawMagicTable("alignItems", {
     "": "center",
     Start: "start",
     End: "end",
   }),
-  ...getMagicTable("justifyContent", {
+  ...drawMagicTable("justifyContent", {
     "": "center",
     Start: "start",
     SpaceAround: "space-around",
@@ -177,15 +181,15 @@ const baseMagicBook = {
   sizeMaxVertical7Rem: {
     maxHeight: "7rem",
   },
-  ...getMagicTable("textAlign", {
+  ...drawMagicTable("textAlign", {
     Left: "left",
     "": "center",
     Right: "right",
   }),
-  ...getMagicTable("cursorHorizontal", {
+  ...drawMagicTable("cursorHorizontal", {
     "": "ew-resize"
   }, "cursor"),
-  ...getMagicTable("cursorVertical", {
+  ...drawMagicTable("cursorVertical", {
     "": "ns-resize"
   }, "cursor"),
   flexGrowChildren: { "& > *": { flexGrow: 1 } },
@@ -195,33 +199,33 @@ const baseMagicBook = {
     justifyContent: "center",
   },
   flexWrap: { flexWrap: "wrap" },
-  ...getMagicTable("tableLayout", {
+  ...drawMagicTable("tableLayout", {
     "": "fixed",
   }),
-  ...getMagicTable("color", {
+  ...drawMagicTable("color", {
     "": "inherit",
     White: "white",
     Black: "black",
   }),
-  ...getMagicTable("background", {
+  ...drawMagicTable("background", {
     "": "inherit",
     White: "white",
     Black: "black",
   }, "background-color"),
-  ...getMagicTable("opacity", {
+  ...drawMagicTable("opacity", {
     Smallest: 0.1,
     Small: 0.3,
     "": 0.5,
     Big: 0.8,
     Biggest: 1,
   }),
-  ...getMagicTable("fontWeight", {
+  ...drawMagicTable("fontWeight", {
     "": 600,
   }),
-  ...getMagicTable("rotate", {
+  ...drawMagicTable("rotate", {
     "": "rotate(90deg)",
   }, "transform"),
-  ...getMagicTable("textOverflow", {
+  ...drawMagicTable("textOverflow", {
     "": "ellipsis",
   }),
 };
@@ -237,7 +241,7 @@ let mapByTheme = {
 };
 export let magic = merge(magicByTheme);
 
-function octaveDefaults(opt: OptOctave, defaults: Octave) {
+function octaveDefaults<P extends any>(opt: OptOctave<P>, defaults: Octave<P>) {
   return {
     min: opt.min ?? defaults.min,
     func: opt.func ?? defaults.func,
@@ -254,8 +258,8 @@ interface OptColor {
 export function makeThemeMagicBook(theme: Theme, themeName: string): MagicBook {
   const spacings: OptOctave<any>[] = theme.spacing ?? defaultSpacing;
   const fontSizes: OptOctave<any>[] = theme.typography.fontSize ?? defaultFontSize;
-  const colors: Octave<OptColor>[] = theme.palette.color ?? defaultColor;
-  echo("makeThemeMagicBook", theme, [themeName, theme]);
+  const colors: OptOctave<OptColor>[] = theme.palette.color ?? defaultColor;
+  echo("makeThemeMagicBook", [theme, themeName]);
 
   let dynamic = {};
 
@@ -328,8 +332,9 @@ export function makeThemeMagicBook(theme: Theme, themeName: string): MagicBook {
     }
   }
 
-  for (const octave of colors)
-    for (let i = octave.min ?? 0; i < octave.length; i += 1) {
+  for (const opt of colors) {
+    const octave = octaveDefaults(opt, defaultColorOctave);
+    for (let i = octave.min ?? 0; i < octave.length ?? 16; i += 1) {
       const [label, value] = octave.func(i);
       if (value.main)
         dynamic["color" + label] = { color: value.main };
@@ -338,6 +343,7 @@ export function makeThemeMagicBook(theme: Theme, themeName: string): MagicBook {
       if (value.dark)
         dynamic["color" + label + "Dark"] = { color: value.dark };
     }
+  }
 
   return {
     "!MuiPaper-root": {
@@ -372,7 +378,7 @@ export function makeThemeMagicBook(theme: Theme, themeName: string): MagicBook {
     h5: theme.typography.h5,
     h6: theme.typography.h6,
     subtitle2: theme.typography.subtitle2,
-    ...getMagicTable("color", {
+    ...drawMagicTable("color", {
       "": theme.palette.text.primary + " !important",
       Secondary: theme.palette.text.secondary + " !important",
       Success: theme.palette.success.main + "!important",
@@ -384,7 +390,7 @@ export function makeThemeMagicBook(theme: Theme, themeName: string): MagicBook {
       "Info": theme.palette.info.main + "!important",
       InfoLight: theme.palette.info.light + "!important",
     }),
-    ...getMagicTable("background", {
+    ...drawMagicTable("background", {
       "": theme.palette.background.paper,
       Success: theme.palette.success.main,
       SucessLight: theme.palette.success.light,
@@ -404,7 +410,7 @@ export function makeThemeMagicBook(theme: Theme, themeName: string): MagicBook {
 
 let themeCache = {};
 
-const spacingsTable = [
+const spacingsTable: [string, string][] = [
   ["Smallest", "4px"],
   ["Small", "8px"],
   ["", "16px"],
@@ -412,17 +418,17 @@ const spacingsTable = [
   ["Biggest", "64px"],
 ];
 
-const defaultSpacingFunc = a => spacingsTable[a];
+const defaultSpacingFunc = (a: number) => spacingsTable[a];
 
-const defaultSpacingOctave = {
+const defaultSpacingOctave: Octave<string> = {
   func: defaultSpacingFunc,
   min: 0,
   length: spacingsTable.length,
 };
 
-const defaultSpacing = [defaultSpacingOctave] as [SpacingOctave, ...SpacingOctave[]];
+const defaultSpacing = [defaultSpacingOctave] as [Octave<string>, ...Octave<string>[]];
 
-const defaultFontSizeTable = [
+const defaultFontSizeTable: [number, string][] = [
   [9, "9px"],
   [11, "11px"],
   [14, "14px"],
@@ -438,18 +444,46 @@ const defaultFontSizeTable = [
   [138, "138px"],
 ];
 
-function defaultFontSizeFunc(x: number) {
+function defaultFontSizeFunc(x: number): [number, string] {
   return defaultFontSizeTable[x];
 }
 
-const defaultFontSizeOctave = {
+const defaultFontSizeOctave: Octave<string> = {
   func: defaultFontSizeFunc,
   min: 0,
   length: defaultFontSizeTable.length,
-  // max: defaultFontSizeMax, size of labels
 };
 
-const defaultFontSize = [defaultFontSizeOctave] as [FontSizeOctave, ...FontSizeOctave[]];
+const defaultFontSize = [defaultFontSizeOctave] as [Octave<string>, ...Octave<string>[]];
+
+const defaultColorTable: [number, string][] = [
+  [0, "#2c2c2c"],  // black
+  [1, "#bd4a6a"],  // dark red
+  [2, "#3a5e46"],  // dark green
+  [3, "#a3975a"],  // dark yellow
+  [4, "#7389bd"],  // dark blue
+  [5, "#8a77ac"],  // dark magenta
+  [6, "#415c5f"],  // dark cyan
+  [7, "#8b85a5"],  // dark gray
+  [8, "#b4aac1"],  // light gray
+  [9, "#bd4a87"],  // red
+  [10, "#53d38a"], // green
+  [11, "#b8cd2e"], // yellow
+  [12, "#739cbd"], // blue
+  [13, "#9589c5"], // magenta
+  [14, "#16d0ba"], // cyan
+  [15, "#f5f5f5"], // white
+];
+
+function defaultColorFunc(x: number): [number, string] {
+  return defaultColorTable[x];
+}
+
+const defaultColorOctave: Octave<string> = {
+  func: defaultColorFunc,
+  min: 0,
+  length: defaultFontSizeTable.length,
+};
 
 const defaultColor = [];
 
@@ -610,7 +644,7 @@ function cast(phrase : string): string {
   return phrase.split(" ").map(camelCaseDash).join(" ");
 }
 
-export function defaultGetTheme(name) {
+export function defaultGetTheme(name: string) {
   return themeCache[name];
 }
 
@@ -722,41 +756,52 @@ export function withStyles(
   };
 }
 
-function _useResponsive(width, name, S, Sp, Op, max = 4): number {
-  const [W, N] = useMemo(() => {
-    // with (a little) help from chat GPT.
-    const W = width - Op;
-    const D1 = S + Sp;
-    return [W, Math.min(max, Math.floor((W + Sp) / D1))];
-  }, [width]);
-
-  useMagic(useCallback((theme, themeName) => {
-    // with (a little) help from chat GPT.
-    const DP = W - N * S - (N - 1) * Sp;
-    const P = DP / 2;
-
-    return {
-      ["sizeHorizontal" + N + name]: {
-        width: (W - DP) + "px",
-      },
-    };
-  }, [N, W]));
-
-  return N;
-}
+const responsiveCache = {};
 
 export function
-useResponsive(el, name, S, Sp, Op, max): number {
-  const [width, setWidth] = useState(el.clientWidth);
+makeResponsive(el: HTMLElement, name: string, S: number, Sp: number, Op: number, max: number = 4) {
+  const capiName = name.substring(0, 1).toUpperCase() + name.substring(1);
+  let width: number;
+  const subs: Map<Function, true> = new Map<Function, true>();
 
-  const outputSize = useCallback(() => {
-    setWidth(el.clientWidth);
-  }, [setWidth]);
+  function outputSize() {
+    width = el.clientWidth;
+    const W = width - Op;
+    // the following line had some help from chat GPT
+    const N = Math.min(max, Math.floor((W + Sp) / (S + Sp)));
 
-  useEffect(() => {
-    outputSize();
-    new ResizeObserver(outputSize).observe(el)
-  }, []);
+    if (!responsiveCache[N]) {
+      const size = N * S + (N - 1) * Sp;
 
-  return _useResponsive(width, name, S, Sp, Op, max);
+      makeMagic({
+        ["sizeHorizontal" + N + capiName]: {
+          width: size + "px",
+        },
+      });
+    }
+
+    const cls = "size-horizontal-" + N + "-" + name;
+
+    for (const [sub] of subs)
+      sub(cls);
+
+    return responsiveCache[N] = cls;
+  }
+
+  function subscribe(sub: (cls: string) => {}) {
+    subs.set(sub, true);
+
+    return () => {
+      subs.delete(sub);
+    };
+  }
+
+  const cls = outputSize();
+  new ResizeObserver(outputSize).observe(el)
+
+  return () => {
+    const [responsive, setResponsive] = useState(cls);
+    useEffect(subscribe(setResponsive), [setResponsive]);
+    return responsive;
+  };
 }

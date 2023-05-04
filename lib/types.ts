@@ -1,15 +1,21 @@
+import React from "react";
+
 export type Css = { [key: string]: any };
 export type MagicBook = { [word: string]: Css };
 export type Magic = { [word: string]: string };
 
-interface OptOctave<P extends object> {
-  func?: (x) => [any, P];
+export type OctaveFunc<P extends any> = (x: number) => [any, P];
+
+export
+interface OptOctave<P extends any> {
+  func?: OctaveFunc<P>;
   min?: number;
   length?: number;
 }
 
-interface Octave<P extends object> extends OptOctave<P> {
-  func: (x) => [any, P];
+export
+interface Octave<P extends any> extends OptOctave<P> {
+  func: OctaveFunc<P>;
   min: number;
   length: number;
 }
@@ -22,7 +28,7 @@ interface Color {
 }
 
 interface Palette {
-  color: OptOctave[],
+  color: Octave<string>[],
   // common: {
   //   white: string;
   //   black: string;
@@ -52,27 +58,13 @@ interface Palette {
   }
 }
 
-interface OptOctave {
-  func?: function;
-  min?: number;
-  length?: number;
-}
-
-interface Octave extends OptOctave {
-  func: function;
-  min: number;
-  length: number;
-}
-
-type OctaveMin = [OptOctave, ...OptOctave[]];
-
 export interface Theme {
   palette: Palette;
-  spacing: OctaveMin;
+  spacing: OptOctave<string>[];
   typography: {
     htmlFontSize: number;
     fontFamily: string;
-    fontSize: OctaveMin,
+    fontSize: OptOctave<string>[],
     h1: Css;
     h2: Css;
     h3: Css;
