@@ -3,11 +3,11 @@ import React, { useState, useEffect, useMemo } from "react";
 import {
   Theme, Octave, OptOctave, Css, Magic, MagicBook,
   WithThemeProps, WithClassesProps,
-} from "../lib/types";
+} from "./types.ts";
 
 const debug = false;
 
-function echo(msg: string, value: any) {
+function echo(msg: string, value: unknown) {
   if (debug)
     console.log(msg, value);
 
@@ -23,7 +23,7 @@ export function camelCaseDash(dash: string) {
   return dash.replace(/-([a-zA-Z0-9])+/g, function (g) { return g.substring(1, 2).toUpperCase() + g.substring(2); });
 }
 
-function cssTransform(classes: Magic, content: Css, dashKey: string, value: Css, reprefix: string = "") {
+function cssTransform(classes: Magic, content: Css, dashKey: string, value: Css, reprefix = "") {
   {/* echo("cssTransform", [dashKey]); */}
   if (!value)
     return "";
@@ -52,7 +52,7 @@ function cssTransform(classes: Magic, content: Css, dashKey: string, value: Css,
       classes[camel] = dashKey;
     const cssContent = Object.entries(content[dashKey]).filter(
       ([key, value]) => key.charAt(0) !== "&" && value !== undefined
-    ).map(([key, value]: [string, any]) => dashCamelCase(key) + ": " + value.toString() + ";\n").join("");
+    ).map(([key, value]: [string, MagicValue]) => dashCamelCase(key) + ": " + value.toString() + ";\n").join("");
 
     if (noConvert) {
       switch (firstChar) {
@@ -61,6 +61,7 @@ function cssTransform(classes: Magic, content: Css, dashKey: string, value: Css,
         return ret;
       case '%':
         ret += dashKey + " {\n" + cssContent + "}\n";
+        /* falls through */
       default: break;
       }
     }
@@ -74,10 +75,10 @@ function cssTransform(classes: Magic, content: Css, dashKey: string, value: Css,
 }
 
 export
-function makeMagic(obj: object, prefix?: string) {
+function makeMagic(obj: Record<string, MagicValue>, prefix?: string) {
   const reprefix = prefix ?? "";
   const style = document.createElement("style");
-  let classes = {};
+  const classes = {};
   let css = "";
 
   for (const [key, value] of Object.entries(obj)) {
@@ -95,18 +96,20 @@ function makeMagic(obj: object, prefix?: string) {
 const horizontal0 = { display: "flex", flexDirection: "initial" };
 const vertical0 = { display: "flex", flexDirection: "column" };
 
+type MagicValue = string | number;
+
 interface MagicTable {
-  [key: string]: any;
+  [key: string]: MagicValue;
 }
 
-function reducer(allMagicTable: MagicTable, prefix: string, property: string, a, [key, value]) {
+function reducer(allMagicTable: MagicTable, prefix: string, property: string, a: MagicBook, [key, value]: [string, MagicValue]) {
   return key === "*" ? { ...a, magic: value } : {
     ...a,
     [prefix + key]: { ...allMagicTable, [property]: value }
   };
 }
 
-function recurseReducer(allMagicTable: MagicTable, prefix: string, a: MagicBook, [key, value]) {
+function recurseReducer(allMagicTable: MagicTable, prefix: string, a: MagicBook, [key, value]: [string, MagicValue]): MagicBook {
   return key === "*" ? a : {
     ...a,
     [prefix + key]: { ...allMagicTable, ...drawMagicTable(prefix, value, "*") }
@@ -249,16 +252,10 @@ function octaveDefaults<P extends any>(opt: OptOctave<P>, defaults: Octave<P>) {
   }
 }
 
-interface OptColor {
-  light?: string;
-  main?: string;
-  dark?: string;
-}
-
 export function makeThemeMagicBook(theme: Theme, themeName: string): MagicBook {
   const spacings: OptOctave<any>[] = theme.spacing ?? defaultSpacing;
   const fontSizes: OptOctave<any>[] = theme.typography.fontSize ?? defaultFontSize;
-  const colors: OptOctave<OptColor>[] = theme.palette.color ?? defaultColor;
+  const colors: OptOctave<string>[] = theme.palette.color ?? defaultColor;
   echo("makeThemeMagicBook", [theme, themeName]);
 
   let dynamic = {};
@@ -336,12 +333,8 @@ export function makeThemeMagicBook(theme: Theme, themeName: string): MagicBook {
     const octave = octaveDefaults(opt, defaultColorOctave);
     for (let i = octave.min ?? 0; i < octave.length ?? 16; i += 1) {
       const [label, value] = octave.func(i);
-      if (value.main)
-        dynamic["color" + label] = { color: value.main };
-      if (value.light)
-        dynamic["color" + label + "Light"] = { color: value.light };
-      if (value.dark)
-        dynamic["color" + label + "Dark"] = { color: value.dark };
+      dynamic["color" + label] = { color: value };
+      dynamic["background" + label] = { backgroundColor: value };
     }
   }
 
@@ -629,8 +622,8 @@ const defaultTheme: Theme = {
 themeCache[""] = defaultTheme;
 
 export
-function merge(obj: object) {
-  let ret = {};
+function merge(obj: Record<string, unknown>) {
+  const ret: Record<string, unknown> = {};
 
   for (const value of Object.values(obj))
     for (const [subKey, subValue] of Object.entries(value))
