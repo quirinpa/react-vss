@@ -1,5 +1,5 @@
 import React from "react";
-import { Theme, MagicBook, Magic, WithThemeProps, WithClassesProps } from "./types";
+import { Theme, MagicBook, MagicTable, Magic, WithThemeProps, WithClassesProps } from "./types";
 
 declare const baseMagicBook: MagicBook;
 
@@ -28,7 +28,7 @@ declare function themeSubscribe(setTheme: (name: string) => void): () => {};
 declare function useTheme(): string;
 
 // used to generate MagicBook contents more easily
-declare function getMagicTable(prefix: string, table: MagicTable, property?: string): MagicBook;
+declare function drawMagicTable(prefix: string, table: MagicTable, property?: string): MagicBook;
 
 declare function withStyles(
   Component: React.ComponentType<WithClassesProps>,

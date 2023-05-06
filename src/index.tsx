@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 
 import {
-  Theme, Octave, OptOctave, Css, Magic, MagicBook,
+  Theme, Octave, OptOctave, Css, Magic, MagicBook, MagicValue, MagicTable,
   WithThemeProps, WithClassesProps,
 } from "./types.ts";
 
@@ -96,12 +96,6 @@ function makeMagic(obj: Record<string, MagicValue>, prefix?: string) {
 const horizontal0 = { display: "flex", flexDirection: "initial" };
 const vertical0 = { display: "flex", flexDirection: "column" };
 
-type MagicValue = string | number;
-
-interface MagicTable {
-  [key: string]: MagicValue;
-}
-
 function reducer(allMagicTable: MagicTable, prefix: string, property: string, a: MagicBook, [key, value]: [string, MagicValue]) {
   return key === "*" ? { ...a, magic: value } : {
     ...a,
@@ -171,13 +165,13 @@ const baseMagicBook = {
     SpaceBetween: "space-between",
     End: "end",
   }),
-  sizeVerticalFull: { height: "100%" },
-  minSizeVerticalFull: { minHeight: "100%" },
-  minSizeVerticalFullView: { minHeight: "100vh" },
-  maxSizeVerticalFull: { maxHeight: "100%" },
-  sizeHorizontalFull: { width: "100%" },
-  minSizeHorizontalFull: { minWidth: "100%" },
-  maxSizeHorizontalFull: { maxWidth: "100%" },
+  sizeVertical: { height: "100%" },
+  minSizeVertical: { minHeight: "100%" },
+  minSizeVerticalView: { minHeight: "100vh" },
+  maxSizeVertical: { maxHeight: "100%" },
+  sizeHorizontal: { width: "100%" },
+  minSizeHorizontal: { minWidth: "100%" },
+  maxSizeHorizontal: { maxWidth: "100%" },
   sizeHorizontalHalf: { width: "50%" },
   sizeHorizontalQuarter: { width: "25%" },
   sizeHorizontalThreeFourths: { width: "75%" },
@@ -314,8 +308,8 @@ export function makeThemeMagicBook(theme: Theme, themeName: string): MagicBook {
       dynamic["marginLeft" + label] = { marginLeft: value };
       dynamic["marginRight" + label] = { marginRight: value };
       dynamic["borderRadius" + label] = { borderRadius: value };
-      dynamic["sizeHorizontal" + label] = { width: value };
-      dynamic["sizeVertical" + label] = { height: value };
+      dynamic["sizeHorizontal" + (label || "Medium")] = { width: value };
+      dynamic["sizeVertical" + (label || "Medium")] = { height: value };
       dynamic["size" + label] = { width: value, height: value };
     }
   }

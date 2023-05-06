@@ -94,3 +94,9 @@ export type withMagicType = (
   Component: React.ComponentType<WithThemeProps> ,
   getStyle?: makeThemeMagicBookType,
 ) => React.ComponentType<WithThemeProps>;
+
+export type MagicValue = string | number;
+
+export interface MagicTable {
+  [key: string]: MagicValue;
+}
