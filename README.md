@@ -1,33 +1,19 @@
 # @tty-pt/styles
 > Cast your styles like a (good) wizard
 
-Your stack is full of bad vibes and old dependencies.<br />
-You are stuck with MUI v4 and react <17 because you are using JSS all over the place,<br />
-but new react no longer supports it.<br />
-Ok. So I have a trick for you: Why don't you use @tty-pt/styles?
+Long story short:
 
-With styles, you can still use MUI v4 style JSS (and close JS interface),<br />
-while actually using v5 in the backend, and react 17.<br />
-Also, everything is done via regular CSS.<br />
-So no strange class names that are random and too specific - styles has good practices built into it.
+This is another JSS library for React.<br />
+Unlike (most) others, it doesn't rely on context.</br>
+Instead, it just relies on normal class names.<br />
 
-The tradeoff? For a while your app will be full of magic.<br />
-Meaning you will have a lot of places in your code where new CSS may be inserted (this happened with MUI v4 as well).
+It is designed to be compatible with Material Design and MUI (v4 / v5 / v6).<br />
+And so that we can more easily extract the generated styles into an external stylesheet.<br />
 
-But - it is a stepping stone.<br />
-You no longer have to update all of the code at once.<br />
-if you owed multiple libraries, you were out of luck until types.
-
-You can easily add Themes and global styles (and spells).
-
-As a plus, it is totally possible to keep cleaning up your code until you got<br />
-a stylesheet you can serve directly from the server.
+You can easily add Themes and global styles (and spells), and customize existing ones.
 
 Eventually, you can move the styles dependency to live in one of your company's core react libs.<br />
 And remove all magic from your application code!
-
-Moreover, you can remove the styles dependency entirely in the end. And just use pre-baked CSS.<br />
-The next version will be react 17, at least!
 
 ## Installation
 ```sh
@@ -56,42 +42,41 @@ function App() {
 ## Slightly more advanced example
 ```js
 import React from "react";
-import { createTheme, makeMagic, withMagic } from "@tty-pt/styles";
+import { createTheme, registerGetTheme, makeMagic, withMagic } from "@tty-pt/styles";
+
+const colorTable = {
+	["StatusSuccess", "#00ff00"],
+};
 
 const theme = createTheme({
 	palette: {
-		status: {
-			success: "#00ff00",
-		}
+		color: [{
+			func: x => colorTable[x],
+			length: colorTable.length,
+		}],
 	}
 });
 
+registerGetTheme(() => theme);
+
 makeMagic({
 	horizontal: {
-		gap: "12px !important",
+		gap: "12px !important", // this will override original
 	},
 });
 
 export default withMagic(function App() {
 	const [themeName, setThemeName] = useState("light");
 
-	useMagic(theme => ({
-		colorStatusSuccess: { // this is a new spell
-			color: theme.palette.status.success,
-	        }
-	}));
-
 	function toggle() {
-		setTheme(theme === "light" ? "dark" : "light");
+		setTheme(themeName === "light" ? "dark" : "light");
 	}
 
-	return (<div className={theme + " horizontal"}>
+	return (<div className={themeName + " horizontal"}>
 		<span>hello<span>
 		<span className="color-status-success">world<span>
 		<button onClick={toggle}>test</button>
 	</div>):
-}, {
-	"@tty-pt/styles": { getTheme: () => theme },
 });
 ```
 This library is designed to be compatible with material-ui.
@@ -107,6 +92,7 @@ Axis can be horizontal or vertical. In some situations it can be omitted (meanin
 Size can be the default (unit) size, which is usually when the label is omitted.
 It can also be small (half) or big (double), smallest (a fourth) or biggest (quadruple).
 Size can also be 0. When you apply "neg" after the size label, it negates the value.
+When used with a unit, usually the value is on the left, and the unit is on the right.
 
 ### position
 Position can be relative or absolute
@@ -123,42 +109,48 @@ Align can be stretch, center, end (meaning flex-end) or start (meaning flex-star
 If you hide this label, it usually means stretch.
 
 ### justify
-This label might mean space-between, center, start (meaning flex-start) and end (meaning flex-end).
-If you hide it it means center.
+This label might mean "space-around", "space-between", "center", "start" (meaning flex-start) or "end" (meaning flex-end).
+If you hide it it means "center".
 
 ### text-align
-This can be "left", "right" or "center".
+This can be "left", "right" or "center". Defaults to "center".
 
 ### cursor
 This can be "resize", "horizontal-\<horizontal-cursor\>" or "vertical-\<vertical-cursor\>".
 
 ### horizontal-cursor
-This can be "resize" meaning "ew-resize".
+Defaults to "ew-resize".
 
 ### vertical-cursor
-This can be "resize" meaning "ns-resize".
+Defaults to "ns-resize".
 
 ### color
 Color can be inherit, which is the default. it can also be black or white.
-In fact all of the colors of the palette of MUI can be used.
-The default is "main" in cases where the color is divided. But you can also specify "light".
+Color kind of depends on the context (well 2 colors).
+If you omit the color label, and you are specifying a text color, you get the primary text color.
+If you do the same while specifying a background color, you get the paper color.
+Only in that first case (text color), might you specify "secondary".
+While only in that second case (background color) you can use the "body" label.
+Then, you have success, warning error and info.
+For each of those you have main, light and dark.
+You can also use colors specified via **color octaves** (see Theming section).
 
 ### table-layout
-This can only be "fixed" for now. This is the default.
+Defaults to "fixed".
 
 ### fontWeight
-This can only be "bold" for now, meaning 600. This is the default.
+defaults to "bold" for now, meaning 600.
 
 ### angle
-This can be piOverTwo. Default.
+Defaults to "pi-over-two".
 
 ## Default Spells
 Spells have two sorts of names or shapes:
 
-- One is camelcased (the one you use to define your styles).
-- The other is dashes like-this. This is what we use for classNames.
+- One is camelcased, in case you wish to do things that way.
+- The other is with-dashes-like-this. This is prefered.
 
-Here I will present mostly the dash-like syntax (it will be more common in the code).
+Here I will present mostly the dash-like syntax.
 
 Spells can be inspired on CSS property keys and values, although this is not the case all the time.
 Beware that this is based on a promise, and some of these spells might not work in certain combinations yet (this library is still a work in progress).
@@ -172,8 +164,9 @@ Beware that this is based on a promise, and some of these spells might not work 
 ### 2: table[-\<axis\>][-\<size\>[-neg]]
 > The same as 0 but for tables
 
-### 4: pad[-\<axis\>][-\<size\>]
+### 4: pad[-\<axis\>|-\<direction\>][-\<size\>][-neg]
 > Add padding to this element in \<axis\> direction, of size \<size\>.
+Neg can only be used along with with direction.
 
 ### 5: flex-grow[-children]
 > This sets the element (or the element's children) to have a flex-grow property of 1.
@@ -181,55 +174,165 @@ Beware that this is based on a promise, and some of these spells might not work 
 ### 6: flex-wrap
 > Use this in conjunction with 0.
 
-### 6: \<position\>
+### 7: \<position\>
 > Sets the position of the element to the label (meaning relative or absolute).
 
-### 7: position-\<direction\>[-\<size\>[-neg]]
+### 8: position-\<direction\>[-\<size\>[-neg]]
 > Place the element in the specified \<direction\>, far from the edge by \<size\>.
 > For use with absolute positioning and the like.
 
-### 8: align-self[-\<align\>]
+### 9: align-self[-\<align\>]
 > This sets the element's property of align-self to the value of \<align\>.
 
-### 9: align-items[-\<align\>]
+### 10: align-items[-\<align\>]
 > This sets the element's property of align-items to the value of \<align\>.
+In this case \<align\> defaults to center.
 
-### 10: justify-content[-\<justify\>]
+### 11: justify-content[-\<justify\>]
 > This sets the element's property of justifyContent to the value of \<justify\>.
 
-### 11: size[-max][-\<axis\>][-\<size\>]
+### 12: [min-|max-|]size[-\<axis\>][-\<size\>]
 > This sets the element's (default or maximum) size to be \<size\> in the specified axis.
 > In this specific case, \<size\> can also be "full" meaning "100%".
 
-### 12: text-align[-\<text-align\>]
+### 13: text-align[-\<text-align\>]
 > This sets the element's textAlign property to the value of \<text-align\>.
 
-### 13: margin[-\<axis\>][-\<size\>[-neg]]
+### 14: margin[-\<axis\>][-\<size\>[-neg]]
 > I'm sure you can guess it at this point. I don't recomend using margins very often.
 
-### 14: cursor[-\<cursor\>]
+### 15: cursor[-\<cursor\>]
 > Now the labels have the most important information.
 
-### 15: color[-\<color\>]
+### 16: color[-\<color\>]
 > Sets the color property of the element.
 
-### 15: background[-\<color\>]
+### 17: background[-\<color\>]
 > Sets the background-color property of the element.
 
-### 16: border[-\<direction\>|-\<axis\>][-\<color\>]
+### 18: border[-\<direction\>|-\<axis\>][-\<color\>]
 > Sets the border in the specified direction or axis to be of the specified color.
 
-### 17: table-layout[-\<table-layout\>]
+### 19: table-layout[-\<table-layout\>]
 > Set the element's table-layout property to the specified \<table-layout\>.
 
-### 18: font-weight[-\<font-weight\>]
+### 20: font-weight[-\<font-weight\>]
 > Set the element's font-weight property to the specified \<font-weight\>.
 
-### 19: rotate[-\<angle\>]
+### 21: rotate[-\<angle\>]
 > Rotate this element by \<angle\>
 
-### 20: overflow[-\<overflow\>]
+### 22: overflow[-\<overflow\>]
 > Apply \<overflow\> as value of overflow property.
+
+## Theming
+Like in MUI, we have a Theme type of object. It is very similar to the original structure:
+
+```typescript
+export type Css = { [key: string]: any };
+export type OctaveFunc<P extends any> = (x: number) => [any, P];
+
+export
+interface OptOctave<P extends any> {
+  func?: OctaveFunc<P>;
+  min?: number;
+  length?: number;
+}
+
+export
+interface Octave<P extends any> extends OptOctave<P> {
+  func: OctaveFunc<P>;
+  min: number;
+  length: number;
+}
+
+interface Color {
+  light: string;
+  main: string;
+  dark: string;
+  contrastText: string;
+}
+
+interface Palette {
+  color: Octave<string>[],
+  type: string;
+  primary: Color;
+  secondary: Color;
+  success: Color;
+  warning: Color;
+  error: Color;
+  info: Color;
+  divider: string;
+  text: {
+    primary: string;
+    secondary: string;
+  },
+  background: {
+    paper: string;
+    default: string;
+  }
+}
+
+export interface Theme {
+  palette: Palette;
+  spacing: OptOctave<string>[];
+  typography: {
+    htmlFontSize: number;
+    fontFamily: string;
+    fontSize: OptOctave<string>[],
+    h1: Css;
+    h2: Css;
+    h3: Css;
+    h4: Css;
+    h5: Css;
+    h6: Css;
+    subtitle2: Css;
+    caption: Css;
+  };
+}
+```
+The only part in which it differs is the color property of the palette object,<br />
+the spacing prop of the theme, and the fontSize property of typography.
+
+These are "Octaves", which means you can provide your own colors, spacings and fontSizes,<br />
+and class names will be created for using these.
+
+## Styling
+makeMagic receives an object, bindMagic and useMagic receive an<br />
+argument named "getStyle", which returns an object.<br />
+This is similar to the callback you pass to makeStyles in MUI v4.<br />
+
+This object will control which styles will be generated.<br />
+For example the following call:
+```javascript
+makeMagic({
+	specialCard: {
+		color: "cyan",
+		"&:hover": {
+			color: "blue",
+		}
+	},
+	"!MuiButton-root": {
+		color: "red",
+	},
+	"?body": {
+		backgroundColor: "gray",
+	},
+}, ".light ");
+```
+Will generate the styles:
+```css
+.light .special-card { color: "cyan"; }
+.light .special-card:hover { color: "blue"; }
+.light .MuiButton-root { color: "red"; }
+body { background-color: "gray"; }
+```
+
+So:
+- "&" will be replaced by the parent selector. It is useful for styling things in relation to a parent. It can only be used inside another selector.
+- "!" will be replaced by ".". It means literal. It avoids transforming the keys from camel case to dashes.
+- "?" means that we will declare a CSS rule exactly as stated after the "?".
+- If you leave out the above, the class name will be transformed to dash format (assumed camel case).
 
 ## Building
 You can build this library by using [pnpm](https://pnpm.io/installation) instead of npm.
@@ -245,5 +348,3 @@ And to start webpack watch:
 ```sh
 pnpm watch
 ```
-
-I think that's the most important.

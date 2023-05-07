@@ -398,7 +398,7 @@ export function makeThemeMagicBook(theme: Theme, themeName: string): MagicBook {
       "": theme.palette.background.paper,
       Body: theme.palette.background.default,
       Success: theme.palette.success.main,
-      SucessLight: theme.palette.success.light,
+      SuccessLight: theme.palette.success.light,
       Warning: theme.palette.warning.main,
       WarningLight: theme.palette.warning.light,
       "Error": theme.palette.error.main,
