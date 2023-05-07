@@ -23,55 +23,58 @@ export function camelCaseDash(dash: string) {
   return dash.replace(/-([a-zA-Z0-9])+/g, function (g) { return g.substring(1, 2).toUpperCase() + g.substring(2); });
 }
 
-function cssTransform(classes: Magic, content: Css, dashKey: string, value: Css, reprefix = "") {
+function getCssContent(prefix, parentKey, content) {
+  {/* console.log("getCssContent", prefix, " - ", parentKey, content); */}
+  let ret = "";
+  let later = "";
+  {/* const firstChar = parentKey.charAt(0); */}
+
+  for (const [key, value] of Object.entries(content[parentKey] ?? {})) {
+    if (typeof value === "object") {
+       if (key.charAt(0) !== "&")
+         continue;
+       const reKey = dashCamelCase(parentKey) + key.substring(1);
+       ret += getCssContent(prefix, reKey, { [reKey]: value });
+    } else if (value !== undefined)
+       later += dashCamelCase(key) + ": " + value.toString() + ";";
+  }
+
+  let realKey = parentKey;
+  switch (parentKey.charAt(0)) {
+    case '?':
+      realKey = parentKey.substring(1);
+      break;
+    case '!':
+      realKey = prefix + " ." + parentKey.substring(1);
+      break;
+    default:
+      realKey = prefix + " ." + dashCamelCase(parentKey);
+  }
+
+  return ret + (later ? realKey + " {" + later + "}\n" : "");
+}
+
+{/* window.getCssContent = getCssContent; */}
+
+function cssTransform(classes: Magic, content: Css, camelKey: string, value: Css, reprefix = "") {
   {/* echo("cssTransform", [dashKey]); */}
   if (!value)
-    return "";
+    return;
 
-  let ret = "";
-  const firstChar = dashKey.charAt(0);
-  const noConvert = firstChar === "!" || firstChar === "?" || firstChar === "%";
-  if (noConvert)
-    dashKey = dashKey.substring(1);
+  const firstChar = camelKey.charAt(0);
+  const noConvert = firstChar === "!" || firstChar === "?" || firstChar === "&";
+  const realKey = noConvert ? camelKey.substring(1) : camelKey;
+
+  if (!content[camelKey])
+    content[camelKey] = {};
 
   for (const [key, spell] of Object.entries(value)) {
     if (typeof spell !== "object") {
-      if (!content[dashKey])
-        content[dashKey] = {};
-      content[dashKey][key] = spell;
+      content[camelKey][key] = spell;
       continue;
     }
-
-    ret += cssTransform(classes, content, dashKey + key.substring(1), spell, reprefix);
+    cssTransform(classes, content[camelKey], key, spell, reprefix);
   }
-
-  if (content[dashKey]) {
-    const camel = noConvert ? dashKey : camelCaseDash(dashKey);
-    {/* if (dashKey.indexOf(" ") === -1) */}
-    if (!classes[camel])
-      classes[camel] = dashKey;
-    const cssContent = Object.entries(content[dashKey]).filter(
-      ([key, value]) => key.charAt(0) !== "&" && value !== undefined
-    ).map(([key, value]: [string, MagicValue]) => dashCamelCase(key) + ": " + value.toString() + ";\n").join("");
-
-    if (noConvert) {
-      switch (firstChar) {
-      case '?':
-        ret += dashKey + reprefix + " {\n" + cssContent + "}\n";
-        return ret;
-      case '%':
-        ret += dashKey + " {\n" + cssContent + "}\n";
-        /* falls through */
-      default: break;
-      }
-    }
-
-    ret += reprefix + "." + dashKey + " {\n" + cssContent + "}\n";
-    ret += reprefix + " ." + dashKey + " {\n" + cssContent + "}\n";
-  }
-
-  {/* echo("cssTransform", [reprefix, dashKey, classes, content]); */}
-  return ret;
 }
 
 export
@@ -81,12 +84,14 @@ function makeMagic(obj: Record<string, MagicValue>, prefix?: string) {
   const classes = {};
   let css = "";
 
+  let content = {};
+
   for (const [key, value] of Object.entries(obj)) {
-    const firstChar = key.charAt(0);
-    css += cssTransform(classes, {}, firstChar === "!" || firstChar === "?" ? key : dashCamelCase(key), value, reprefix);
+    cssTransform(classes, content, key, value, reprefix);
+    css += getCssContent(reprefix, key, content);
   }
 
-  echo("ADD STYLE\n",  css);
+  echo("ADD STYLE\n", css);
   style.appendChild(document.createTextNode(css));
   style.type = "text/css";
   document.head.appendChild(style);
@@ -129,8 +134,8 @@ export
 const baseMagicBook = {
   horizontal0,
   vertical0,
-  relative: { position: "relative" },
-  absolute: { position: "absolute" },
+  relative: { position: "relative !important" },
+  absolute: { position: "absolute !important" },
   positionTop0: { top: 0 },
   positionLeft0: { left: 0 },
   positionRight0: { right: 0 },
@@ -149,6 +154,14 @@ const baseMagicBook = {
     "": "stretch",
   }),
   flexGrow: { flexGrow: 1 },
+  flexGrowChildren: {
+    "& > *": {
+      flexGrow: 1,
+    },
+  },
+  /*"?.flex-grow-children > *": {
+    flexGrow: 1,
+  },*/
   ...drawMagicTable("overflow", {
     "": "auto",
     Hidden: "hidden",
@@ -167,6 +180,7 @@ const baseMagicBook = {
   }),
   sizeVertical: { height: "100%" },
   minSizeVertical: { minHeight: "100%" },
+  sizeVerticalView: { height: "100vh" },
   minSizeVerticalView: { minHeight: "100vh" },
   maxSizeVertical: { maxHeight: "100%" },
   sizeHorizontal: { width: "100%" },
@@ -189,7 +203,6 @@ const baseMagicBook = {
   ...drawMagicTable("cursorVertical", {
     "": "ns-resize"
   }, "cursor"),
-  flexGrowChildren: { "& > *": { flexGrow: 1 } },
   verticalCenter: {
     display: "inline-flex !important",
     flexDirection: "column",
@@ -224,6 +237,9 @@ const baseMagicBook = {
   }, "transform"),
   ...drawMagicTable("textOverflow", {
     "": "ellipsis",
+  }),
+  ...drawMagicTable("borderCollapse", {
+    "": "collapse",
   }),
 };
 
@@ -342,6 +358,7 @@ export function makeThemeMagicBook(theme: Theme, themeName: string): MagicBook {
       color: theme.palette.text.primary,
     },
     "!MuiIconButton-root": { color: theme.palette.primary.main + " !important" },
+    "!MuiChip-root": { color: theme.palette.primary.main + " !important" },
     "!MuiInputBase-root": { color: theme.palette.text.primary + " !important" },
     "?body": {
       backgroundColor: theme.palette.background.default,
@@ -379,6 +396,7 @@ export function makeThemeMagicBook(theme: Theme, themeName: string): MagicBook {
     }),
     ...drawMagicTable("background", {
       "": theme.palette.background.paper,
+      Body: theme.palette.background.default,
       Success: theme.palette.success.main,
       SucessLight: theme.palette.success.light,
       Warning: theme.palette.warning.main,
@@ -733,13 +751,14 @@ export function bindMagic(getStyle?: typeof makeThemeMagicBook, addPrefix?: stri
   }
 }
 
-export function withStyles(
-  Component: React.ComponentType<WithClassesProps>
-) {
-  const getStyles = bindMagic();
-  return function WithClasses(props: object) {
-    const mag = getStyles();
-    return <Component classes={mag} { ...props } />;
+export function withStyles(getStyle?: typeof makeThemeMagicBook, options?: object) {
+  const getStyles = bindMagic(getStyle);
+
+  return function realWithStyles(Component: React.ComponentType<WithClassesProps>) {
+    return function WithClasses(props: object) {
+      const mag = getStyles();
+      return <Component classes={mag} { ...props } />;
+    };
   };
 }
 
