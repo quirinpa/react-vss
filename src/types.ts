@@ -60,7 +60,7 @@ interface Palette {
 
 export interface Theme {
   palette: Palette;
-  spacing: OptOctave<string>[];
+  spacingOct: OptOctave<string>[];
   typography: {
     htmlFontSize: number;
     fontFamily: string;

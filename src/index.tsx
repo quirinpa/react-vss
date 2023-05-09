@@ -263,7 +263,7 @@ function octaveDefaults<P extends any>(opt: OptOctave<P>, defaults: Octave<P>) {
 }
 
 export function makeThemeMagicBook(theme: Theme, themeName: string): MagicBook {
-  const spacings: OptOctave<any>[] = theme.spacing ?? defaultSpacing;
+  const spacings: OptOctave<any>[] = theme.spacingOct ?? defaultSpacing;
   const fontSizes: OptOctave<any>[] = theme.typography.fontSize ?? defaultFontSize;
   const colors: OptOctave<string>[] = theme.palette.color ?? defaultColor;
   echo("makeThemeMagicBook", [theme, themeName]);
@@ -628,7 +628,7 @@ const defaultTheme: Theme = {
     //   textTransform: "uppercase"
     // }
   },
-  spacing: defaultSpacing,
+  spacingOct: defaultSpacing,
 };
 
 themeCache[""] = defaultTheme;
