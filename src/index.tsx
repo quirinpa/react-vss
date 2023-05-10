@@ -197,6 +197,9 @@ const baseMagicBook = {
     "": "center",
     Right: "right",
   }),
+  ...drawMagicTable("cursor", {
+    "": "pointer"
+  }),
   ...drawMagicTable("cursorHorizontal", {
     "": "ew-resize"
   }, "cursor"),
@@ -320,12 +323,16 @@ export function makeThemeMagicBook(theme: Theme, themeName: string): MagicBook {
       dynamic["marginVertical" + label + "Neg"] = { marginTop: "-" + value, marginBottom: "-" + value };
       dynamic["marginHorizontal" + label + "Neg"] = { marginLeft: "-" + value, marginRight: "-" + value };
       dynamic["marginTop" + label] = { marginTop: value };
+      dynamic["marginTop" + label + "Neg"] = { marginTop: "-" + value };
       dynamic["marginBottom" + label] = { marginBottom: value };
       dynamic["marginLeft" + label] = { marginLeft: value };
       dynamic["marginRight" + label] = { marginRight: value };
       dynamic["borderRadius" + label] = { borderRadius: value };
       dynamic["sizeHorizontal" + (label || "Medium")] = { width: value };
+      dynamic["sizeHorizontalView" + (label || "Medium") + "Neg"] = { width: "calc(100vh - 2 * " + value + ")" };
       dynamic["sizeVertical" + (label || "Medium")] = { height: value };
+      dynamic["sizeVerticalView" + (label || "Medium") + "Neg"] = { height: "calc(100vh - 2 * " + value + ")" };
+      dynamic["minSizeVerticalView" + (label || "Medium") + "Neg"] = { minHeight: "calc(100vh - 2 * " + value + ") !important" };
       dynamic["size" + label] = { width: value, height: value };
     }
   }
@@ -357,7 +364,19 @@ export function makeThemeMagicBook(theme: Theme, themeName: string): MagicBook {
       backgroundColor: theme.palette.background.paper,
       color: theme.palette.text.primary,
     },
+    "!MuiButton-root": {
+      backgroundColor: theme.palette.primary.main,
+      color: theme.palette.text.primary,
+    },
+    "!MuiButton-root:hover": {
+      backgroundColor: theme.palette.primary.main,
+    },
+    "!MuiFormHelperText-root": {
+      color: theme.palette.text.primary,
+      marginTop: 0,
+    },
     "!MuiIconButton-root": { color: theme.palette.primary.main + " !important" },
+    "!MuiSvgIcon-root": { color: theme.palette.text.primary + " !important" },
     "!MuiChip-root": { color: theme.palette.primary.main + " !important" },
     "!MuiInputBase-root": { color: theme.palette.text.primary + " !important" },
     "?body": {
@@ -384,6 +403,7 @@ export function makeThemeMagicBook(theme: Theme, themeName: string): MagicBook {
     subtitle2: theme.typography.subtitle2,
     ...drawMagicTable("color", {
       "": theme.palette.text.primary + " !important",
+      Primary: theme.palette.primary.main + " !important",
       Secondary: theme.palette.text.secondary + " !important",
       Success: theme.palette.success.main + "!important",
       SucessLight: theme.palette.success.light + "!important",
@@ -419,8 +439,10 @@ const spacingsTable: [string, string][] = [
   ["Smallest", "4px"],
   ["Small", "8px"],
   ["", "16px"],
+  ["Medium", "24px"],
   ["Big", "32px"],
   ["Biggest", "64px"],
+  ["Giant", "128px"],
 ];
 
 const defaultSpacingFunc = (a: number) => spacingsTable[a];
