@@ -101,33 +101,51 @@ function makeMagic(obj: Record<string, MagicValue>, prefix?: string) {
 const horizontal0 = { display: "flex", flexDirection: "initial" };
 const vertical0 = { display: "flex", flexDirection: "column" };
 
-function reducer(allMagicTable: MagicTable, prefix: string, property: string, a: MagicBook, [key, value]: [string, MagicValue]) {
-  return key === "*" ? { ...a, magic: value } : {
-    ...a,
-    [prefix + key]: { ...allMagicTable, [property]: value }
-  };
+function reducer(allMagicTable: MagicTable, prefix: string, propertyArr: string[], a: MagicBook, [key, value]: [string, MagicValue]) {
+  if (key === "*") {
+    a.magic = value;
+    return a;
+  }
+
+  for (const prop of propertyArr)
+    a[prefix + key] = {
+      ...allMagicTable,
+      ...(a[prefix + key] ?? {}),
+      [prop]: value
+    };
+
+  return a;
 }
 
 function recurseReducer(allMagicTable: MagicTable, prefix: string, a: MagicBook, [key, value]: [string, MagicValue]): MagicBook {
-  return key === "*" ? a : {
-    ...a,
-    [prefix + key]: { ...allMagicTable, ...drawMagicTable(prefix, value, "*") }
-  };
+  if (key !== "*")
+    a[prefix + key] = { ...allMagicTable, ...drawMagicTable(prefix, value, "*") };
+
+  return a;
 }
 
 export
-function drawMagicTable(prefix: string, table: MagicTable, property?: string) {
-  const realProperty = property ?? dashCamelCase(prefix);
-  const allMagicTable = table["*"] ?? {};
-
+function drawMagicTable(prefix: string, table: MagicTable, property?: string|(string[])) {
   if (!table || typeof table !== "object")
     return table;
 
-  return Object.entries(table).reduce(
-    (property !== "*" ? reducer.bind(null, allMagicTable, prefix, realProperty)
-      : recurseReducer.bind(null, allMagicTable, prefix)),
+  const dashPrefix = dashCamelCase(prefix);
+  const allMagicTable = table["*"] ?? {};
+
+  if (property === "*")
+    return Object.entries(table).reduce(
+      recurseReducer.bind(null, allMagicTable, prefix),
+      {}
+    );
+
+  const realProperty = property ?? dashPrefix;
+
+  return echo("drawMagicTable", Object.entries(table).reduce(
+    reducer.bind(null, allMagicTable, prefix, typeof realProperty === "string" ? [realProperty] : (realProperty === undefined ? [] : realProperty).map(
+      prop => prop ?? dashPrefix
+    )),
     {}
-  );
+  ));
 }
 
 export
@@ -219,7 +237,7 @@ const baseMagicBook = {
     "": "inherit",
     White: "white",
     Black: "black",
-  }),
+  }, ["color", "fill"]),
   ...drawMagicTable("background", {
     "": "inherit",
     White: "white",
@@ -366,25 +384,47 @@ export function makeThemeMagicBook(theme: Theme, themeName: string): MagicBook {
     },
     "!MuiButton-root": {
       backgroundColor: theme.palette.primary.main,
-      color: theme.palette.text.primary,
+      color: "white",
+      fill: "white",
     },
     "!MuiButton-root:hover": {
       backgroundColor: theme.palette.primary.main,
+    },
+    "!MuiButton-root .MuiSvgIcon-root": {
+      color: "white !important",
+      fill: "white !important",
     },
     "!MuiFormHelperText-root": {
       color: theme.palette.text.primary,
       marginTop: 0,
     },
-    "!MuiIconButton-root": { color: theme.palette.primary.main + " !important" },
-    "!MuiSvgIcon-root": { color: theme.palette.text.primary + " !important" },
-    "!MuiChip-root": { color: theme.palette.primary.main + " !important" },
-    "!MuiInputBase-root": { color: theme.palette.text.primary + " !important" },
+    "!MuiIconButton-root": {
+      color: theme.palette.primary.main + " !important",
+      fill: theme.palette.primary.main + " !important",
+    },
+    "!MuiSvgIcon-root": {
+      color: theme.palette.text.primary + " !important",
+      fill: theme.palette.text.primary + " !important"
+    },
+    "!MuiChip-root": {
+      color: theme.palette.primary.main + " !important",
+      fill: theme.palette.primary.main + " !important",
+    },
+    "!MuiInputBase-root": {
+      color: theme.palette.text.primary + " !important",
+      fill: theme.palette.text.primary + " !important",
+    },
     "?body": {
       backgroundColor: theme.palette.background.default,
       color: theme.palette.text.primary,
+      fill: theme.palette.text.primary,
+    },
+    "?svg": {
+      fill: theme.palette.text.primary,
     },
     "!MuiFormLabel-colorPrimary": {
       color: theme.palette.text.primary,
+      fill: theme.palette.text.primary,
     },
     menuItem: {
       ...baseMagicBook.vertical0,
@@ -393,6 +433,7 @@ export function makeThemeMagicBook(theme: Theme, themeName: string): MagicBook {
     paper: {
       backgroundColor: theme.palette.background.paper,
       color: theme.palette.text.primary,
+      fill: theme.palette.text.primary,
     },
     ...dynamic,
     caption: theme.typography.caption,
@@ -413,7 +454,7 @@ export function makeThemeMagicBook(theme: Theme, themeName: string): MagicBook {
       ErrorLight: theme.palette.error.light + "!important",
       "Info": theme.palette.info.main + "!important",
       InfoLight: theme.palette.info.light + "!important",
-    }),
+    }, ["color", "fill"]),
     ...drawMagicTable("background", {
       "": theme.palette.background.paper,
       Body: theme.palette.background.default,
@@ -831,5 +872,28 @@ makeResponsive(el: HTMLElement, name: string, S: number, Sp: number, Op: number,
     const [responsive, setResponsive] = useState(cls);
     useEffect(subscribe(setResponsive), [setResponsive]);
     return responsive;
+  };
+}
+
+export
+function Svg(props) {
+  const { src, ...rest } = props;
+  if (typeof src === "string")
+    return <img style={{ fill: "white" }} src={ src } { ...rest } />;
+  const Component = src;
+  return <Component { ...rest } />;
+}
+
+export
+function withSvg(src) {
+  const Component = src;
+
+  if (typeof src === "string")
+    return (props) => {
+      return <img src={ src } { ...props } />;
+    };
+
+  else return (props) => {
+    return <Component { ...props } />;
   };
 }
