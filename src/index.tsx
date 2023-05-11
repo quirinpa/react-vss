@@ -262,6 +262,12 @@ const baseMagicBook = {
   ...drawMagicTable("borderCollapse", {
     "": "collapse",
   }),
+  ...drawMagicTable("display", {
+    "": "inline-block",
+  }),
+  ...drawMagicTable("boxSizing", {
+    "": "border-box",
+  }),
 };
 
 const baseMagic = makeMagic(baseMagicBook);
@@ -370,6 +376,7 @@ export function makeThemeMagicBook(theme: Theme, themeName: string): MagicBook {
       const [label, value] = octave.func(i);
       dynamic["color" + label] = { color: value };
       dynamic["background" + label] = { backgroundColor: value };
+      dynamic["hover" + label] = { "&:hover": { color: value } };
     }
   }
 
@@ -442,6 +449,16 @@ export function makeThemeMagicBook(theme: Theme, themeName: string): MagicBook {
     h5: theme.typography.h5,
     h6: theme.typography.h6,
     subtitle2: theme.typography.subtitle2,
+    hoverInfo: {
+      "&:hover": {
+          color: theme.palette.info.main + " !important"
+      },
+    },
+    hoverSuccess: {
+      "&:hover": {
+          color: theme.palette.success.main + " !important"
+      },
+    },
     ...drawMagicTable("color", {
       "": theme.palette.text.primary + " !important",
       Primary: theme.palette.primary.main + " !important",
@@ -471,6 +488,9 @@ export function makeThemeMagicBook(theme: Theme, themeName: string): MagicBook {
     borderTop: {
       borderTop: "solid thin " + theme.palette.divider,
     },
+    ...drawMagicTable("textDecoration", {
+      "": "none",
+    }),
   };
 }
 
@@ -479,6 +499,7 @@ let themeCache = {};
 const spacingsTable: [string, string][] = [
   ["Smallest", "4px"],
   ["Small", "8px"],
+  ["MediumSmall", "12px"],
   ["", "16px"],
   ["Medium", "24px"],
   ["Big", "32px"],
