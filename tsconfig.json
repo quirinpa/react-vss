@@ -4,7 +4,7 @@
         "outDir": "./build/",
         "sourceMap": true,
         "strictNullChecks": true,
-        "module": "es6",
+        "module": "commonjs",
         "jsx": "react",
         "target": "es2018",
         "allowJs": true,
