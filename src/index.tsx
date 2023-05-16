@@ -155,19 +155,20 @@ const baseMagicBook = {
   relative: { position: "relative !important" },
   absolute: { position: "absolute !important" },
   positionTop0: { top: 0 },
+  positionBottom0: { bottom: 0 },
   positionLeft0: { left: 0 },
   positionRight0: { right: 0 },
-  positionBottom0: { bottom: 0 },
+  position0: { top: 0, bottom: 0, left: 0, right: 0 },
   margin0: { margin: 0 },
   marginTop0: { marginTop: 0 },
+  marginBottom0: { marginBottom: 0 },
   marginLeft0: { marginLeft: 0 },
   marginRight0: { marginRight: 0 },
-  marginBottom0: { marginBottom: 0 },
   padding0: { padding: 0 },
   paddingTop0: { paddingTop: 0 },
+  paddingBottom0: { paddingBottom: 0 },
   paddingLeft0: { paddingLeft: 0 },
   paddingRight0: { paddingRight: 0 },
-  paddingBottom0: { paddingBottom: 0 },
   ...drawMagicTable("alignSelf", {
     "": "stretch",
   }),
@@ -264,6 +265,7 @@ const baseMagicBook = {
   }),
   ...drawMagicTable("display", {
     "": "inline-block",
+    None: "none",
   }),
   ...drawMagicTable("boxSizing", {
     "": "border-box",
@@ -332,10 +334,12 @@ export function makeThemeMagicBook(theme: Theme, themeName: string): MagicBook {
           paddingRight: "calc(" + value + "/2)",
         }
       };
+      dynamic["position" + label] = { top: value, bottom: value, left: value, right: value };
       dynamic["positionTop" + label] = { top: value };
       dynamic["positionBottom" + label] = { bottom: value };
       dynamic["positionLeft" + label] = { left: value };
       dynamic["positionRight" + label] = { right: value };
+      dynamic["position" + label + "Neg"] = { top: -value, bottom: -value, left: -value, right: -value };
       dynamic["positionTop" + label + "Neg"] = { top: "-" + value };
       dynamic["positionBottom" + label + "Neg"] = { bottom: "-" + value };
       dynamic["positionLeft" + label + "Neg"] = { left: "-" + value };
