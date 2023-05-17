@@ -23,47 +23,48 @@ export function camelCaseDash(dash: string) {
   return dash.replace(/-([a-zA-Z0-9])+/g, function (g) { return g.substring(1, 2).toUpperCase() + g.substring(2); });
 }
 
+function keyConvert(key: string, prefix: string = "") {
+  const firstChar = key.charAt(0);
+  switch (firstChar) {
+    case '?': return key.replaceAll("?", prefix + " ");
+    case ' ':
+    case '&': return key;
+    case '!': return key.replaceAll("!", prefix + " .");
+    default:
+      if (prefix && key.substring(0, prefix.length) === prefix)
+        return key;
+      return prefix + " ." + dashCamelCase(key);
+  }
+}
+
 function getCssContent(prefix, parentKey, content) {
   {/* console.log("getCssContent", prefix, " - ", parentKey, content); */}
   let ret = "";
   let later = "";
-  {/* const firstChar = parentKey.charAt(0); */}
+  let realKey = keyConvert(parentKey, prefix);
 
   for (const [key, value] of Object.entries(content[parentKey] ?? {})) {
     if (typeof value === "object") {
        if (key.charAt(0) !== "&")
          continue;
-       const reKey = dashCamelCase(parentKey) + key.substring(1);
+       const reKey = key.replaceAll(/&/g, realKey);
        ret += getCssContent(prefix, reKey, { [reKey]: value });
     } else if (value !== undefined)
        later += dashCamelCase(key) + ": " + value.toString() + ";";
   }
 
-  let realKey = parentKey;
-  switch (parentKey.charAt(0)) {
-    case '?':
-      realKey = parentKey.substring(1);
-      break;
-    case '!':
-      realKey = prefix + " ." + parentKey.substring(1);
-      break;
-    default:
-      realKey = prefix + " ." + dashCamelCase(parentKey);
-  }
+  if (prefix && parentKey.substring(0, prefix.length) === prefix)
+    return ret + (later ? parentKey + " {" + later + "}\n" : "");
 
   return ret + (later ? realKey + " {" + later + "}\n" : "");
 }
 
-{/* window.getCssContent = getCssContent; */}
+window.getCssContent = getCssContent;
 
 function cssTransform(classes: Magic, content: Css, camelKey: string, value: Css, reprefix = "") {
   {/* echo("cssTransform", [dashKey]); */}
   if (!value)
     return;
-
-  const firstChar = camelKey.charAt(0);
-  const noConvert = firstChar === "!" || firstChar === "?" || firstChar === "&";
-  const realKey = noConvert ? camelKey.substring(1) : camelKey;
 
   if (!content[camelKey])
     content[camelKey] = {};
@@ -73,7 +74,7 @@ function cssTransform(classes: Magic, content: Css, camelKey: string, value: Css
       content[camelKey][key] = spell;
       continue;
     }
-    cssTransform(classes, content[camelKey], key, spell, reprefix);
+    cssTransform(classes, content[camelKey], keyConvert(key), spell, reprefix);
   }
 }
 
@@ -87,8 +88,9 @@ function makeMagic(obj: Record<string, MagicValue>, prefix?: string) {
   let content = {};
 
   for (const [key, value] of Object.entries(obj)) {
-    cssTransform(classes, content, key, value, reprefix);
-    css += getCssContent(reprefix, key, content);
+    const ckey = keyConvert(key, reprefix);
+    cssTransform(classes, content, ckey, value, reprefix);
+    css += getCssContent(reprefix, keyConvert(key, reprefix), content);
   }
 
   echo("ADD STYLE\n", css);
@@ -384,6 +386,11 @@ export function makeThemeMagicBook(theme: Theme, themeName: string): MagicBook {
     }
   }
 
+  const disabledColor = ("color-mix(in srgb, "
+    + theme.palette.text.primary
+    + ", transparent 70%)"
+  );
+
   return {
     "!MuiPaper-root": {
       backgroundColor: theme.palette.background.paper,
@@ -409,14 +416,26 @@ export function makeThemeMagicBook(theme: Theme, themeName: string): MagicBook {
       color: theme.palette.text.primary,
       marginTop: 0,
     },
-    "!MuiIconButton-root": {
-      color: theme.palette.primary.main + " !important",
-      fill: theme.palette.primary.main + " !important",
+    "!MuiIconButton-root.Mui-disabled": {
+      color: "rgba(255, 255, 255, 0.3)",
+      fill: "rgba(255, 255, 255, 0.3)",
     },
-    "!MuiSvgIcon-root": {
-      color: theme.palette.text.primary + " !important",
-      fill: theme.palette.text.primary + " !important"
+    "?svg.active, ?i.active": {
+      color: theme.palette.primary.main,
+      fill: theme.palette.primary.main,
     },
+    "!MuiIconButton-root:not(:disabled)": {
+      color: theme.palette.primary.main,
+      fill: theme.palette.primary.main,
+      "& > svg, & > i": {
+        color: theme.palette.primary.main,
+        fill: theme.palette.primary.main,
+      },
+    },
+    // "!MuiSvgIcon-root": {
+    //   color: theme.palette.text.primary + " !important",
+    //   fill: theme.palette.text.primary + " !important"
+    // },
     "!MuiChip-root": {
       color: theme.palette.primary.main + " !important",
       fill: theme.palette.primary.main + " !important",
@@ -430,9 +449,15 @@ export function makeThemeMagicBook(theme: Theme, themeName: string): MagicBook {
       color: theme.palette.text.primary,
       fill: theme.palette.text.primary,
     },
-    "?svg": {
-      fill: theme.palette.text.primary,
+    "?button": {
+      "& > i, & > svg": {
+        color: disabledColor,
+        fill: disabledColor,
+      },
     },
+    // "?svg": {
+    //   fill: theme.palette.text.primary,
+    // },
     "!MuiFormLabel-colorPrimary": {
       color: theme.palette.text.primary,
       fill: theme.palette.text.primary,
