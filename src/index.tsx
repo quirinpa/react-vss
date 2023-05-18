@@ -326,6 +326,16 @@ export function makeThemeMagicBook(theme: Theme, themeName: string): MagicBook {
       dynamic["padBottom" + label + "Neg"] = { paddingTop: value, paddingLeft: value, paddingRight: value };
       dynamic["padLeft" + label + "Neg"] = { paddingTop: value, paddingBottom: value, paddingRight: value };
       dynamic["padRight" + label + "Neg"] = { paddingTop: value, paddingBottom: value, paddingLeft: value };
+      dynamic["tableVertical" + label] = {
+        "& th": {
+          paddingTop: "calc(" + value + "/2)",
+          paddingBottom: "calc(" + value + "/2)",
+        },
+        "& td": {
+          paddingTop: "calc(" + value + "/2)",
+          paddingBottom: "calc(" + value + "/2)",
+        }
+      };
       dynamic["tableHorizontal" + label] = {
         "& th": {
           paddingLeft: "calc(" + value + "/2)",
@@ -511,12 +521,21 @@ export function makeThemeMagicBook(theme: Theme, themeName: string): MagicBook {
       "Error": theme.palette.error.main,
       ErrorLight: theme.palette.error.light,
     }, "background-color"),
-    borderLeft: {
-      borderLeft: "solid thin " + theme.palette.divider,
-    },
     borderTop: {
       borderTop: "solid thin " + theme.palette.divider,
     },
+    borderBottom: {
+      borderBottom: "solid thin " + theme.palette.divider,
+    },
+    borderLeft: {
+      borderLeft: "solid thin " + theme.palette.divider,
+    },
+    borderRight: {
+      borderRight: "solid thin " + theme.palette.divider,
+    },
+    ...drawMagicTable("textTransform", {
+      "": "uppercase",
+    }),
     ...drawMagicTable("textDecoration", {
       "": "none",
     }),
