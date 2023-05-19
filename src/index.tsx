@@ -314,6 +314,8 @@ export function makeThemeMagicBook(theme: Theme, themeName: string): MagicBook {
           "&:first": { marginLeft: "0px" }
         },
       };
+      dynamic["splitHorizontal2" + label] = { "& > *": { width: "calc(50% - " + value + ")" } };
+      dynamic["splitHorizontal3" + label] = { "& > *": { width: "calc(33.33332% - " + value + " * 2)" } };
       dynamic["vertical" + label] = { ...vertical0, rowGap: value };
       dynamic["pad" + label] = { padding: value };
       dynamic["padVertical" + label] = { paddingTop: value, paddingBottom: value };
@@ -406,6 +408,22 @@ export function makeThemeMagicBook(theme: Theme, themeName: string): MagicBook {
       backgroundColor: theme.palette.background.paper,
       color: theme.palette.text.primary,
     },
+    "!MuiTableCell-root": {
+      borderBottom: "solid thin " + theme.palette.divider,
+      color: theme.palette.text.primary,
+    },
+    "!MuiTextField-root,!MuiInput-root,!MuiInputBase-root": {
+      "& svg": {
+        color: theme.palette.text.primary,
+      },
+    },
+    "!MuiTableSortLabel-root": {
+      "&.Mui-active,&:hover,&focus": { color: disabledColor },
+      "&.Mui-active .MuiSvgIcon-root": { color: theme.palette.text.primary },
+    },
+    "!MuiCheckbox-root": {
+      color: disabledColor + " !important",
+    },
     "!MuiToolbar-root": {
       backgroundColor: theme.palette.background.paper,
       color: theme.palette.text.primary,
@@ -418,9 +436,44 @@ export function makeThemeMagicBook(theme: Theme, themeName: string): MagicBook {
     "!MuiButton-root:hover": {
       backgroundColor: theme.palette.primary.main,
     },
+    "!MuiButtonBase-root,!MuiSvgIcon-root": {
+      color: "inherit",
+    },
+    "!MuiCheckbox-root.Mui-checked .MuiSvgIcon-root": {
+      color: theme.palette.primary.main,
+    },
+    "!MuiInput-underline": {
+      "&:before,&:after": {
+        borderBottom: "solid 1px " + disabledColor,
+      },
+    },
+    "!MuiOutlinedInput-notchedOutline": {
+      border: "solid 1px " + disabledColor,
+    },
+    "!MuiOutlinedInput-root:hover:not(.Mui-focused) .MuiOutlinedInput-notchedOutline": {
+      border: "solid 1px " + theme.palette.text.primary,
+    },
+    "!MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline": {
+      border: "solid 1px " + theme.palette.primary.main,
+    },
+    "!MuiInput-underline:hover:not(.Mui-focused)": {
+      "&:before,&:after": {
+        borderBottom: "solid 2px " + theme.palette.text.primary,
+      },
+    },
+    "!MuiInput-underline.Mui-focused": {
+      "&:before": {
+        borderBottom: "solid 2px " + theme.palette.text.primary,
+      },
+      "&:after": {
+        borderBottom: "solid 2px " + theme.palette.primary.main,
+      },
+    },
     "!MuiButton-root .MuiSvgIcon-root": {
-      color: "white !important",
-      fill: "white !important",
+      color: "inherit",
+    },
+    "!MuiFab-root,!MuiFab-root:hover": {
+      backgroundColor: theme.palette.primary.main,
     },
     "!MuiFormHelperText-root": {
       color: theme.palette.text.primary,
@@ -472,6 +525,12 @@ export function makeThemeMagicBook(theme: Theme, themeName: string): MagicBook {
       color: theme.palette.text.primary,
       fill: theme.palette.text.primary,
     },
+    "!MuiDayCalendar-weekDayLabel": {
+      color: disabledColor,
+    },
+    "!MuiPickersDay-today:not(.Mui-selected)": {
+      borderColor: disabledColor,
+    },
     menuItem: {
       ...baseMagicBook.vertical0,
       padding: "8px",
@@ -521,6 +580,9 @@ export function makeThemeMagicBook(theme: Theme, themeName: string): MagicBook {
       "Error": theme.palette.error.main,
       ErrorLight: theme.palette.error.light,
     }, "background-color"),
+    border: {
+      border: "solid thin " + theme.palette.divider,
+    },
     borderTop: {
       borderTop: "solid thin " + theme.palette.divider,
     },
@@ -532,6 +594,9 @@ export function makeThemeMagicBook(theme: Theme, themeName: string): MagicBook {
     },
     borderRight: {
       borderRight: "solid thin " + theme.palette.divider,
+    },
+    "!MuiDivider-root": {
+      borderColor: theme.palette.divider,
     },
     ...drawMagicTable("textTransform", {
       "": "uppercase",
