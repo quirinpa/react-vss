@@ -156,6 +156,7 @@ const baseMagicBook = {
   vertical0,
   relative: { position: "relative !important" },
   absolute: { position: "absolute !important" },
+  fixed: { position: "fixed !important" },
   positionTop0: { top: 0 },
   positionBottom0: { bottom: 0 },
   positionLeft0: { left: 0 },
@@ -308,10 +309,14 @@ export function makeThemeMagicBook(theme: Theme, themeName: string): MagicBook {
       const [label, value] = (octave.func ?? defaultSpacingFunc)(i);
       dynamic["horizontal" + label] = { ...horizontal0, gap: value };
       dynamic["blockHorizontal" + label] = {
+        "& > *": { display: "inline-block" },
+        "& > *:not(:first)": { marginLeft: value },
+      };
+      dynamic["childPadHorizontal" + label] = {
         "& > *": {
-          float: "left",
-          marginLeft: value,
-          "&:first": { marginLeft: "0px" }
+          display: "inline-block",
+          paddingLeft: "calc(" + value + "/2)",
+          paddingRight: "calc(" + value + "/2)",
         },
       };
       dynamic["splitHorizontal2" + label] = { "& > *": { width: "calc(50% - " + value + ")" } };
