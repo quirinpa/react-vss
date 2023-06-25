@@ -6,6 +6,7 @@ import {
 } from "./types.ts";
 
 const debug = false;
+export let magic = {};
 
 function echo(msg: string, value: unknown) {
   if (debug)
@@ -37,7 +38,7 @@ function keyConvert(key: string, prefix: string = "") {
   }
 }
 
-function getCssContent(prefix, parentKey, content) {
+function getCssContent(prefix: string, parentKey: string, content: Magic) {
   {/* console.log("getCssContent", prefix, " - ", parentKey, content); */}
   let ret = "";
   let later = "";
@@ -61,7 +62,7 @@ function getCssContent(prefix, parentKey, content) {
 
 window.getCssContent = getCssContent;
 
-function cssTransform(classes: Magic, content: Css, camelKey: string, value: Css, reprefix = "") {
+function cssTransform(content: Css, camelKey: string, value: Css, reprefix = "") {
   {/* echo("cssTransform", [dashKey]); */}
   if (!value)
     return;
@@ -74,7 +75,7 @@ function cssTransform(classes: Magic, content: Css, camelKey: string, value: Css
       content[camelKey][key] = spell;
       continue;
     }
-    cssTransform(classes, content[camelKey], keyConvert(key), spell, reprefix);
+    cssTransform(content[camelKey], keyConvert(key), spell, reprefix);
   }
 }
 
@@ -82,22 +83,26 @@ export
 function makeMagic(obj: Record<string, MagicValue>, prefix?: string) {
   const reprefix = prefix ?? "";
   const style = document.createElement("style");
-  const classes = {};
   let css = "";
 
   let content = {};
 
   for (const [key, value] of Object.entries(obj)) {
     const ckey = keyConvert(key, reprefix);
-    cssTransform(classes, content, ckey, value, reprefix);
-    css += getCssContent(reprefix, keyConvert(key, reprefix), content);
+    if (magic[ckey])
+      continue;
+    cssTransform(content, ckey, value, reprefix);
+    css += getCssContent(reprefix, ckey, content);
   }
+
+  if (!css)
+    return content;
 
   echo("ADD STYLE\n", css);
   style.appendChild(document.createTextNode(css));
   style.type = "text/css";
   document.head.appendChild(style);
-  return classes;
+  return content;
 }
 
 const horizontal0 = { display: "flex", flexDirection: "initial" };
@@ -284,7 +289,8 @@ let magicByTheme = {
 let mapByTheme = {
   "": new Map<Function, true>(),
 };
-export let magic = merge(magicByTheme);
+
+magic = merge(magicByTheme);
 
 function octaveDefaults<P extends any>(opt: OptOctave<P>, defaults: Octave<P>) {
   return {
