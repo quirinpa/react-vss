@@ -1,6 +1,6 @@
 {
   "name": "@tty-pt/styles",
-  "version": "0.1.5",
+  "version": "0.1.5-1",
   "description": "let your components know about your app's styling preferences, use less local styles",
   "main": "./dist/index.js",
   "@tty-pt/scripts": {
