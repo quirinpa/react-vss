@@ -9,8 +9,10 @@ const readPackage = (pkg, context) => {
 	const remove = removeDep.bind(null, context);
 	if (pkg.peerDependencies)
 		remove(pkg, "react");
+		remove(pkg, "react-dom");
 	if (pkg.devDependencies)
 		remove(pkg, "react", "dev");
+		remove(pkg, "react-dom", "dev");
 	return pkg;
 };
 
