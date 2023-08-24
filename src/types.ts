@@ -28,11 +28,11 @@ interface Color {
 }
 
 interface Palette {
-  color: Octave<string>[],
-  // common: {
-  //   white: string;
-  //   black: string;
-  // };
+  colorOct: Octave<string>[],
+  common: {
+    white: string;
+    black: string;
+  };
   type: string;
   primary: Color;
   secondary: Color;
@@ -40,22 +40,22 @@ interface Palette {
   warning: Color;
   error: Color;
   info: Color;
-  // grey: {
-  //   100: string;
-  //   500: string;
-  //   900: string;
-  // };
   divider: string;
   text: {
     primary: string;
     secondary: string;
-    // disabled: string;
+    disabled: string;
     // icon: string;
   },
   background: {
     paper: string;
     default: string;
-  }
+  },
+  action: {
+    hoverOpacity: string;
+    active: string;
+  };
+  grey: string[];
 }
 
 export interface Theme {
@@ -64,7 +64,7 @@ export interface Theme {
   typography: {
     htmlFontSize: number;
     fontFamily: string;
-    fontSize: OptOctave<string>[],
+    fontSizeOct: OptOctave<string>[],
     h1: Css;
     h2: Css;
     h3: Css;
@@ -73,7 +73,13 @@ export interface Theme {
     h6: Css;
     subtitle2: Css;
     caption: Css;
+    pxToRem: (arg: any) => any;
   };
+  breakpoints?: { keys: [], up: (name: string) => string };
+  shadows?: [];
+  transitions?: { create: (() => void), duration: { shorter: string }, easing: { easeOut: string } };
+  shape?: { borderRadius: string };
+  zIndex?: { tooltip: number };
 }
 
 export

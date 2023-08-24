@@ -179,6 +179,7 @@ const baseMagicBook = {
   paddingRight0: { paddingRight: 0 },
   ...drawMagicTable("alignSelf", {
     "": "stretch",
+    Center: "center",
   }),
   flexGrow: { flexGrow: 1 },
   flexGrowChildren: {
@@ -302,8 +303,8 @@ function octaveDefaults<P extends any>(opt: OptOctave<P>, defaults: Octave<P>) {
 
 export function makeThemeMagicBook(theme: Theme, themeName: string): MagicBook {
   const spacings: OptOctave<any>[] = theme.spacingOct ?? defaultSpacing;
-  const fontSizes: OptOctave<any>[] = theme.typography.fontSize ?? defaultFontSize;
-  const colors: OptOctave<string>[] = theme.palette.color ?? defaultColor;
+  const fontSizes: OptOctave<any>[] = theme.typography.fontSizeOct ?? defaultFontSize;
+  const colors: OptOctave<string>[] = theme.palette.colorOct ?? defaultColor;
   echo("makeThemeMagicBook", [theme, themeName]);
 
   let dynamic = {};
@@ -440,12 +441,12 @@ export function makeThemeMagicBook(theme: Theme, themeName: string): MagicBook {
       color: theme.palette.text.primary,
     },
     "!MuiButton-root": {
-      backgroundColor: theme.palette.primary.main,
+      // backgroundColor: theme.palette.primary.main,
       color: "white",
       fill: "white",
     },
     "!MuiButton-root:hover": {
-      backgroundColor: theme.palette.primary.main,
+      // backgroundColor: theme.palette.primary.main,
     },
     "!MuiButtonBase-root,!MuiSvgIcon-root": {
       color: "inherit",
@@ -491,10 +492,10 @@ export function makeThemeMagicBook(theme: Theme, themeName: string): MagicBook {
       marginTop: 0,
     },
     "!MuiIconButton-root.Mui-disabled": {
-      color: "rgba(255, 255, 255, 0.3)",
-      fill: "rgba(255, 255, 255, 0.3)",
+      color: theme.palette.text.disabled,
+      fill: theme.palette.text.disabled,
     },
-    "?svg.active, ?i.active": {
+    "?svg.active, ?i.active, ?.icon-selected": {
       color: theme.palette.primary.main,
       fill: theme.palette.primary.main,
     },
@@ -578,6 +579,7 @@ export function makeThemeMagicBook(theme: Theme, themeName: string): MagicBook {
       WarningLight: theme.palette.warning.light + "!important",
       "Error": theme.palette.error.main + "!important",
       ErrorLight: theme.palette.error.light + "!important",
+      ErrorDark: theme.palette.error.dark + "!important",
       "Info": theme.palette.info.main + "!important",
       InfoLight: theme.palette.info.light + "!important",
     }, ["color", "fill"]),
@@ -590,6 +592,9 @@ export function makeThemeMagicBook(theme: Theme, themeName: string): MagicBook {
       WarningLight: theme.palette.warning.light,
       "Error": theme.palette.error.main,
       ErrorLight: theme.palette.error.light,
+      ErrorDark: theme.palette.error.dark,
+      "Info": theme.palette.info.main,
+      InfoLight: theme.palette.info.light,
     }, "background-color"),
     border: {
       border: "solid thin " + theme.palette.divider,
@@ -704,7 +709,7 @@ export
 const defaultTheme: Theme = {
   palette: {
     type: "light",
-    color: defaultColor,
+    colorOct: defaultColor,
     primary: {
       light: "#42a5f5",
       main: "#1976d2",
@@ -745,7 +750,7 @@ const defaultTheme: Theme = {
     text: {
       primary: "#fff",
       secondary: "rgba(255, 255, 255, 0.7)",
-      // disabled: "rgba(255, 255, 255, 0.5)",
+      disabled: "rgba(255, 255, 255, 0.5)",
       // hint: "rgba(255, 255, 255, 0.5)",
       // icon: "rgba(255, 255, 255, 0.5)"
     },
@@ -755,11 +760,20 @@ const defaultTheme: Theme = {
       // primary: "#424242",
       // secondary: "#212121"
     },
+    action: {
+      hoverOpacity: "0.8",
+      active: "#ffaa00",
+    },
+    common: {
+      white: "white",
+      black: "black",
+    },
+    grey: (new Array(1000)).fill("#aaa"),
   },
   typography: {
     htmlFontSize: 16,
     fontFamily: "Open Sans",
-    fontSize: defaultFontSize,
+    fontSizeOct: defaultFontSize,
     h1: {
       fontFamily: "Open Sans",
       fontSize: "6rem",
@@ -835,8 +849,16 @@ const defaultTheme: Theme = {
     //   lineHeight: 2.66,
     //   textTransform: "uppercase"
     // }
+    pxToRem: (a: number) => (a / 14),
   },
   spacingOct: defaultSpacing,
+  breakpoints: { keys: [], up: a => a },
+  shadows: [],
+  transitions: { create: () => {}, duration: { shorter: "" }, easing: { easeOut: "" } },
+  shape: { borderRadius: "" },
+  zIndex: {
+    tooltip: 10,
+  },
 };
 
 themeCache[""] = defaultTheme;
