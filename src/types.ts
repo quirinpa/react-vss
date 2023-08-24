@@ -1,7 +1,8 @@
 import React from "react";
 
 export type Css = { [key: string]: any };
-export type MagicBook = { [word: string]: Css };
+export type MagicValue = string | number | Css | MagicBook;
+export type MagicBook = { [word: string]: MagicValue };
 export type Magic = { [word: string]: string };
 
 export type OctaveFunc<P extends any> = (x: number) => [any, P];
@@ -20,6 +21,7 @@ interface Octave<P extends any> extends OptOctave<P> {
   length: number;
 }
 
+export
 interface Color {
   light: string;
   main: string;
@@ -28,11 +30,11 @@ interface Color {
 }
 
 interface Palette {
-  color: Octave<string>[],
-  // common: {
-  //   white: string;
-  //   black: string;
-  // };
+  colorOct: Octave<string>[],
+  common: {
+    white: string;
+    black: string;
+  };
   type: string;
   primary: Color;
   secondary: Color;
@@ -40,22 +42,22 @@ interface Palette {
   warning: Color;
   error: Color;
   info: Color;
-  // grey: {
-  //   100: string;
-  //   500: string;
-  //   900: string;
-  // };
   divider: string;
   text: {
     primary: string;
     secondary: string;
-    // disabled: string;
+    disabled: string;
     // icon: string;
   },
   background: {
-    paper: string;
+    primary: string;
     default: string;
-  }
+  },
+  action: {
+    hoverOpacity: number;
+    active: string;
+  };
+  grey: string[];
 }
 
 export interface Theme {
@@ -64,7 +66,7 @@ export interface Theme {
   typography: {
     htmlFontSize: number;
     fontFamily: string;
-    fontSize: OptOctave<string>[],
+    fontSizeOct: OptOctave<string>[],
     h1: Css;
     h2: Css;
     h3: Css;
@@ -73,7 +75,13 @@ export interface Theme {
     h6: Css;
     subtitle2: Css;
     caption: Css;
+    // pxToRem: (arg: any) => any;
   };
+  // breakpoints?: { keys: any[], up: (name: string) => string };
+  // shadows?: [];
+  // transitions?: { create: (() => void), duration: { shorter: string }, easing: { easeOut: string } };
+  // shape?: { borderRadius: number };
+  // zIndex?: { tooltip: number };
 }
 
 export
@@ -95,8 +103,13 @@ export type withMagicType = (
   getStyle?: makeThemeMagicBookType,
 ) => React.ComponentType<WithThemeProps>;
 
-export type MagicValue = string | number;
-
 export interface MagicTable {
-  [key: string]: MagicValue;
+  [key: string]: string|number;
+}
+
+export type Themes = { [key: string]: Theme };
+
+export interface ThemeSub {
+  name: string;
+  themes: Themes;
 }

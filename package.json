@@ -1,29 +1,43 @@
 {
   "name": "@tty-pt/styles",
-  "version": "0.1.6",
+  "version": "0.2.7",
   "description": "let your components know about your app's styling preferences, use less local styles",
-  "main": "./dist/index.js",
-  "@tty-pt/scripts": {
-    "entry": "./src/index.tsx",
-    "development": true,
-    "library": true
+  "main": "./dist/index.umd.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "type": "module",
+  "exports": {
+    ".": {
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json",
+    "./dist/*": "./dist/*"
   },
-  "types": "./src/index.d.ts",
   "scripts": {
-    "test": "echo no tests #scripts test",
-    "build": "scripts build",
-    "watch": "scripts watch",
-    "lint": "scripts lint"
+    "build": "tsc && scripts build",
+    "lint": "scripts lint",
+    "watch": "scripts watch"
   },
   "author": "",
   "license": "BSD-2-Clause",
   "peerDependencies": {
-    "react": "^17.0.0 < 20.0.0",
-    "react-dom": "^17.0.0 < 20.0.0"
+    "react": "^16.0.0 < 20.0.0",
+    "react-dom": "^16.0.0 < 20.0.0"
   },
   "devDependencies": {
-    "@tty-pt/scripts": "^0.1.4",
-    "react": "^17.0.0 < 20.0.0",
-    "react-dom": "^17.0.0 < 20.0.0"
-  }
+    "@tty-pt/scripts": "^0.2.0",
+    "@types/react": "^16.14.45",
+    "@types/react-dom": "^16.9.19",
+    "eslint-plugin-react": "^7.33.2",
+    "react": "^16.14.0",
+    "react-dom": "^16.14.0",
+    "typescript": "^5.2.2"
+  },
+  "dependencies": {
+    "@tty-pt/sub": "^1.1.1",
+    "deepmerge": "^4.3.1"
+  },
+  "files": [
+    "dist"
+  ]
 }
