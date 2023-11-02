@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { Sub, makeSub } from "@tty-pt/sub";
+import { Sub, reflect } from "@tty-pt/sub";
 import deepmerge from "deepmerge";
 
 import {
-  Theme, Octave, OptOctave, Css, Magic, MagicBook, MagicValue, MagicTable,
-  WithThemeProps, WithClassesProps, Themes, ThemeSub, 
+  Theme, Octave, OptOctave, Css, Magic, MagicBook,
+  MagicValue, MagicTable, WithThemeProps, WithClassesProps,
 } from "./types";
 
 const debug = false;
@@ -1132,73 +1132,66 @@ const defaultTheme: Theme = {
   // },
 };
 
-export const themeSub = makeSub<ThemeSub>({
-  name: window.localStorage.getItem("@tty-pt/styles/theme") ?? "light",
+interface ThemeSubInterface {
+  name: string;
   themes: {
-    light: defaultTheme,
-  },
-});
+    [key: string]: Theme;
+  }
+};
 
-(document.body.parentElement as HTMLElement).className = themeSub.data.value.name;
+class ThemeSub extends Sub<ThemeSubInterface> {
+  _target: any;
+  _value: any;
 
-export const setTheme = themeSub.makeEmitNow((sub: ThemeSub, name: string) => {
-  (document.body.parentElement as HTMLElement).className = name;
-  window.localStorage.setItem("@tty-pt/styles/theme", name);
-  return {
-    name,
-    themes: {
-      ...sub.themes,
-      [name]: sub.themes[name] ?? defaultTheme,
-    },
-  };
-});
-
-type AlmostThemes = { [key: string]: Partial<Theme> };
-
-export function registerThemes(
-  themes: AlmostThemes | ((themes: Themes) => AlmostThemes),
-) {
-  const current = themeSub.data.value;
-
-  if (typeof themes === "function")
-    themes = themes(current.themes);
-
-  let ret = {};
-
-  for (const [themeName, themeContent] of Object.entries(themes))
-    ret[themeName] = deepmerge(current.themes[themeName] ?? defaultTheme, themeContent);
-
-  const newThemes = deepmerge(current.themes, ret);
-
-  themeSub.update({
-    name: current.name,
-    themes: newThemes,
-  });
-
-  return themeSub.data.value.themes[current.name];
-}
-
-export function getTheme(themeName: string) {
-  return themeSub.data.value.themes[themeName];
-}
-
-export
-function createThemes(createTheme: (theme: Theme) => Theme) {
-  const sub = themeSub.data.value;
-  const themes = sub.themes;
-  let ret = {};
-
-  for (const [key, value] of Object.entries(themes)) {
-    ret[key] = createTheme(value);
-    echo("Created theme", ret[key]);
+  constructor() {
+    super({
+      name: window.localStorage.getItem("@tty-pt/styles/theme") ?? "light",
+      themes: {
+        light: defaultTheme,
+      },
+    });
   }
 
-  themeSub.update({
-    name: sub.name,
-    themes: ret,
-  });
+  @reflect()
+  set name(val: string) {
+    this._target = val;
+  }
 
-  return themeSub.data.value;
+  @reflect("themes")
+  add(themes: { [key: string]: Theme } | Function) {
+    const current = this.get();
+
+    if (typeof themes === "function")
+      themes = themes(current.themes);
+
+    let ret = {};
+
+    for (const [themeName, themeContent] of Object.entries(themes))
+      ret[themeName] = deepmerge(current.themes[themeName] ?? defaultTheme, themeContent);
+
+    const newThemes = deepmerge(current.themes, ret);
+
+    return newThemes;
+  }
+
+  @reflect("themes")
+  create(createTheme: (theme: Theme) => Theme) {
+    const themes = this.get();
+    let ret = {};
+
+    for (const [key, value] of Object.entries(themes))
+      ret[key] = createTheme(value as Theme);
+
+    return ret;
+  }
+}
+
+const themeSub = new ThemeSub();
+
+(document.body.parentElement as HTMLElement).className = themeSub._value.name;
+
+export function getTheme(themeName: string) {
+  return themeSub._value.themes[themeName];
 }
 
 export
@@ -1210,11 +1203,6 @@ function merge(obj: Record<string, { [key: string]: unknown }>) {
       ret[subKey] = subValue;
 
   return ret;
-}
-
-export
-function cast(phrase : string): string {
-  return phrase.split(" ").map(camelCaseDash).join(" ");
 }
 
 export function defaultGetTheme(name: string) {
@@ -1242,23 +1230,14 @@ export function getThemeMagic(themeName: string, getStyle: typeof makeThemeMagic
   mapByTheme[themeName].set(getStyle, true);
 }
 
-type setState<T extends any> = (newState: T) => void;
-
-export default
-function useSub<T extends any>(sub: Sub<T>) {
-  const [data, setData] = useState(sub.data.value) as [T, setState<T>];
-  useEffect(() => sub.subscribe(setData), []);
-  return data;
-}
-
 export
 function useThemeName() {
-  return useSub<ThemeSub>(themeSub).name;
+  return themeSub.use().name;
 }
 
 export function useTheme() {
-  const sub = useSub<ThemeSub>(themeSub);
-  return sub.themes[sub.name];
+  const { name, themes } = themeSub.use();
+  return themes[name];
 }
 
 interface MagicBoxProps extends WithThemeProps {

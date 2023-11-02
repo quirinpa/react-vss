@@ -106,10 +106,3 @@ export type withMagicType = (
 export interface MagicTable {
   [key: string]: string|number;
 }
-
-export type Themes = { [key: string]: Theme };
-
-export interface ThemeSub {
-  name: string;
-  themes: Themes;
-}
