@@ -2,16 +2,16 @@ lockfileVersion: '6.0'
 
 dependencies:
   '@tty-pt/sub':
-    specifier: ^1.1.1
-    version: 1.1.1
+    specifier: ^2.0.10
+    version: 2.0.10
   deepmerge:
     specifier: ^4.3.1
     version: 4.3.1
 
 devDependencies:
   '@tty-pt/scripts':
-    specifier: ^0.2.0
-    version: 0.2.0(@types/node@18.17.15)(@types/react-dom@16.9.19)(@types/react@16.14.45)(@types/testing-library__jest-dom@5.14.9)(esbuild@0.18.20)
+    specifier: ^0.2.4
+    version: 0.2.4(@types/node@18.17.15)(@types/react-dom@16.9.19)(@types/react@16.14.45)(@types/testing-library__jest-dom@5.14.9)(esbuild@0.18.20)
   '@types/react':
     specifier: ^16.14.45
     version: 16.14.45
@@ -3392,7 +3392,7 @@ packages:
     dependencies:
       '@babel/runtime': 7.22.15
       '@testing-library/dom': 9.3.1
-      '@types/react-dom': 18.2.7
+      '@types/react-dom': 18.2.14
     dev: true
 
   /@trysound/sax@0.2.0:
@@ -3400,13 +3400,13 @@ packages:
     engines: {node: '>=10.13.0'}
     dev: true
 
-  /@tty-pt/scripts@0.2.0(@types/node@18.17.15)(@types/react-dom@16.9.19)(@types/react@16.14.45)(@types/testing-library__jest-dom@5.14.9)(esbuild@0.18.20):
-    resolution: {integrity: sha512-R0Vc83LdgVU0nG327lhCkxDyOoFvjNuwIz+rX5nsrBKbRwtv4aKKwH33tfiraYSfWhblXV8VLuVNQ9pNG5IL6g==}
+  /@tty-pt/scripts@0.2.4(@types/node@18.17.15)(@types/react-dom@16.9.19)(@types/react@16.14.45)(@types/testing-library__jest-dom@5.14.9)(esbuild@0.18.20):
+    resolution: {integrity: sha512-6grQWyb59ecv2FMHtRhZXg3DELPP8u1BsMO5tPRl8IxiAzIxa8CRLFgycXy410LVBEICg5wh0ZUlBvgWFO4LPg==}
     hasBin: true
     peerDependencies:
       '@types/node': ^18.0.0
-      '@types/react': ^17.0.0
-      '@types/react-dom': ^17.0.0
+      '@types/react': '>= 17.0.0 < 20.0.0'
+      '@types/react-dom': '>= 17.0.0 < 20.0.0'
       '@types/testing-library__jest-dom': ^5.14.5
     dependencies:
       '@babel/core': 7.22.17
@@ -3472,8 +3472,10 @@ packages:
       - webpack-plugin-serve
     dev: true
 
-  /@tty-pt/sub@1.1.1:
-    resolution: {integrity: sha512-7o+HubzMtj5rdivURdWWmfTlX2xTYpIMio8JvadiuBzusBDviALAAvkfW9BXWaAAsMKL4SNQzWR29ZRun+krNw==}
+  /@tty-pt/sub@2.0.10:
+    resolution: {integrity: sha512-mh0YeQZPYVuASdMTOdRF8ugy0LXb0JZf/SmuYt8941EbktACIC1oJLz62LpRrt3CfiEnC/FY7NIIyfq06hAcYA==}
+    dependencies:
+      lodash: 4.17.21
     dev: false
 
   /@types/aria-query@5.0.1:
@@ -3698,8 +3700,8 @@ packages:
       '@types/react': 16.14.45
     dev: true
 
-  /@types/react-dom@18.2.7:
-    resolution: {integrity: sha512-GRaAEriuT4zp9N4p1i8BDBYmEyfo+xQ3yHjJU4eiK5NDa1RmUZG+unZABUTK4/Ox/M+GaHwb6Ow8rUITrtjszA==}
+  /@types/react-dom@18.2.14:
+    resolution: {integrity: sha512-V835xgdSVmyQmI1KLV2BEIUgqEuinxp9O4G6g3FqO/SqLac049E53aysv0oEFD2kHfejeKU+ZqL2bcFWj9gLAQ==}
     dependencies:
       '@types/react': 16.14.45
     dev: true
@@ -7637,7 +7639,6 @@ packages:
 
   /lodash@4.17.21:
     resolution: {integrity: sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==}
-    dev: true
 
   /log-symbols@4.1.0:
     resolution: {integrity: sha512-8XPvpAA8uyhfteu8pIvQxpJZ7SYYdpUivZpGy6sFsBuKRY/7rQGavedeB8aK+Zkyq6upMFVL/9AW6vOYzfRyLg==}
