@@ -7,6 +7,8 @@ import {
   MagicValue, MagicTable, WithThemeProps, WithClassesProps,
 } from "./types";
 
+export { Theme } from "./types";
+
 const debug = false;
 export let magic = {};
 
@@ -324,6 +326,7 @@ function reducer(allMagicTable: MagicTable, prefix: string, propertyArr: string[
     a[prefix + key] = {
       ...allMagicTable,
       ...(typeof curVal === "object" ? curVal : {}),
+      ...(a[prefix + key] as object),
       [prop]: value
     };
 
@@ -394,6 +397,8 @@ const baseMagicBook = {
   ...drawMagicTable("alignSelf", {
     "": "stretch",
     Center: "center",
+    End: "flex-end",
+    Start: "flex-start",
   }),
   flexGrow: { flexGrow: 1 },
   flexGrowChildren: {
@@ -535,7 +540,7 @@ function colorMix(color0: string, color1: string, alpha = 1) {
   return `rgb(${r * inv + r1 * alpha}, ${g * inv + g1 * alpha}, ${b * inv + b1 * alpha})`;
 }
 
-export function makeThemeMagicBook(theme: Theme, themeName: string): MagicBook {
+export function makeThemeMagicBook(theme: Theme, themeName?: string): MagicBook {
   const spacings: OptOctave<any>[] = theme.spacingOct ?? defaultSpacing;
   const fontSizes: OptOctave<any>[] = theme.typography.fontSizeOct ?? defaultFontSize;
   const colors: OptOctave<string>[] = theme.palette.colorOct ?? defaultColor;
@@ -654,6 +659,7 @@ export function makeThemeMagicBook(theme: Theme, themeName: string): MagicBook {
       background: theme.palette.background.default,
       color: theme.palette.text.primary,
       fill: theme.palette.text.primary,
+      margin: 0,
     },
     "?.sbdocs,?.sbdocs>*": {
       background: "inherit",
@@ -697,8 +703,13 @@ export function makeThemeMagicBook(theme: Theme, themeName: string): MagicBook {
     },
     "!MuiIconButton-root": {
       color: theme.palette.primary.main,
+      fill: theme.palette.primary.main,
       "&:hover": {
         backgroundColor: hoverColor,
+      },
+      "& > i": {
+        color: theme.palette.primary.main,
+        fill: theme.palette.primary.main,
       }
     },
     // "!MuiButtonBase-root,!MuiSvgIcon-root": {
@@ -793,7 +804,7 @@ export function makeThemeMagicBook(theme: Theme, themeName: string): MagicBook {
       color: "inherit",
       fill: "inherit",
     },
-    "?button": {
+    "?button:disabled": {
       "& > i, & > svg": {
         color: disabledColor,
         fill: disabledColor,
@@ -1036,7 +1047,7 @@ const defaultTheme: Theme = {
       white: "white",
       black: "black",
     },
-    grey: (new Array(1000)).fill("#aaa"),
+    // grey: (new Array(1000)).fill("#aaa"),
   },
   typography: {
     htmlFontSize: 16,
@@ -1123,6 +1134,7 @@ const defaultTheme: Theme = {
     // },
   },
   spacingOct: defaultSpacing,
+  spacing: (...args: number[]) => args.map(nu => (nu * 8) + "px").join(" "),
   // breakpoints: { keys: [], up: a => a },
   // shadows: [],
   // transitions: { create: () => {}, duration: { shorter: "" }, easing: { easeOut: "" } },
@@ -1140,9 +1152,6 @@ interface ThemeSubInterface {
 };
 
 class ThemeSub extends Sub<ThemeSubInterface> {
-  _target: any;
-  _value: any;
-
   constructor() {
     super({
       name: window.localStorage.getItem("@tty-pt/styles/theme") ?? "light",
@@ -1167,15 +1176,15 @@ class ThemeSub extends Sub<ThemeSubInterface> {
     let ret = {};
 
     for (const [themeName, themeContent] of Object.entries(themes))
-      ret[themeName] = deepmerge(current.themes[themeName] ?? defaultTheme, themeContent);
+      ret[themeName] = deepmerge((current.themes ?? {})[themeName] ?? defaultTheme, themeContent);
 
-    const newThemes = deepmerge(current.themes, ret);
+    const newThemes = deepmerge(current.themes ?? {}, ret);
 
     return newThemes;
   }
 
   @reflect("themes")
-  create(createTheme: (theme: Theme) => Theme) {
+  create(createTheme: (theme?: Theme) => Theme) {
     const themes = this.get();
     let ret = {};
 
@@ -1186,6 +1195,7 @@ class ThemeSub extends Sub<ThemeSubInterface> {
   }
 }
 
+export
 const themeSub = new ThemeSub();
 
 (document.body.parentElement as HTMLElement).className = themeSub._value.name;
@@ -1218,7 +1228,7 @@ export function getThemeMagic(themeName: string, getStyle: typeof makeThemeMagic
   const theme = getTheme(themeName) ?? defaultTheme;
 
   makeMagic(
-    getStyle(theme, themeName),
+    (getStyle ?? makeThemeMagicBook)(theme, themeName),
     (themeName ? "." + themeName : "") + (addPrefix ? " ." + addPrefix : addPrefix),
   );
 
@@ -1272,6 +1282,7 @@ export function withMagic(
 }
 
 function _mapClassNames2(ret: { [key: string]: string }, obj: object) {
+  obj = obj ?? {};
   for (const key of Object.keys(obj)) {
     const ch = key.charAt(0);
     switch (ch) {
@@ -1289,13 +1300,14 @@ function _mapClassNames2(ret: { [key: string]: string }, obj: object) {
 }
 
 function mapClassNames(obj: object) {
+  // console.log("mapClassNames", obj);
   let ret = {};
   _mapClassNames2(ret, obj);
   return ret;
 }
 
 export function useMagic(getStyle?: typeof makeThemeMagicBook, addPrefix?: any) {
-  const classNames = useMemo(() => mapClassNames((getStyle ?? makeThemeMagicBook)(defaultTheme, "dummy")), []);
+  const classNames = useMemo(() => mapClassNames((getStyle ?? makeThemeMagicBook)(defaultTheme)), []);
 
   useEffect(themeSub.subscribe((sub: ThemeSub) => {
     getThemeMagic(sub.name, getStyle ?? makeThemeMagicBook, addPrefix);
@@ -1305,7 +1317,9 @@ export function useMagic(getStyle?: typeof makeThemeMagicBook, addPrefix?: any) 
 }
 
 export function bindMagic(getStyle?: typeof makeThemeMagicBook, addPrefix?: string) {
-  const classNames = mapClassNames((getStyle ?? makeThemeMagicBook)(defaultTheme, "dummy"));
+  const styles = (getStyle ?? makeThemeMagicBook)(defaultTheme);
+  // console.log("bindMagic", styles);
+  const classNames = mapClassNames(styles);
   themeSub.subscribe((value: ThemeSub) => getThemeMagic(value.name, getStyle ?? makeThemeMagicBook, addPrefix));
   return () => classNames;
 }
