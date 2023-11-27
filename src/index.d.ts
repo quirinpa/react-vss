@@ -16,13 +16,14 @@ export declare function defaultGetTheme<P extends Theme>(
 ): P;
 
 // add magic to your app
-export declare function withMagic(
-  Component: React.ComponentType<WithThemeProps> ,
+export declare function withMagic<T>(
+  Component: React.ComponentType<T&WithThemeProps> | React.ComponentClass<T&WithThemeProps>,
   getStyle?: typeof makeThemeMagicBook,
-): React.ComponentType<WithThemeProps>;
+): React.ComponentType<T&WithThemeProps>;
 
 // almost drop-in replacement form MUI v4 makeStyles
 export declare function bindMagic(getStyle?: typeof makeThemeMagicBook, reprefix?: string): () => Magic;
+export declare function makeStyles(getStyle?: typeof makeThemeMagicBook, reprefix?: string): () => Magic;
 
 export function useMagic(getStyle?: typeof makeThemeMagicBook, addPrefix?: any): Magic;
 
@@ -33,9 +34,9 @@ export declare function useThemeName(): string;
 // used to generate MagicBook contents more easily
 export declare function drawMagicTable(prefix: string, table: MagicTable, property?: string): MagicBook;
 
-export declare function withStyles(
-  Component: React.ComponentType<WithClassesProps>,
-): React.ComponentType;
+export declare function withStyles<T>(
+  Component: React.ComponentType<T&WithClassesProps> | React.ComponentClass<T&WithClassesProps>,
+): React.ComponentType<T>;
 
 export declare const defaultTheme: Theme;
 
@@ -43,3 +44,6 @@ export declare const themeSub: typeof Sub;
 export declare const setTheme: (name: string) => void;
 
 export declare function createThemes(createTheme: (theme: Theme) => Theme): void;
+
+export declare function hexToRGBA(hex: string, alpha: Number): string;
+export declare function colorMix(color0: string, color1: string, alpha: Number): string;

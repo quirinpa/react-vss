@@ -9,15 +9,7 @@ import {
 
 export { Theme } from "./types";
 
-const debug = false;
 export let magic = {};
-
-function echo<T>(msg: string, value: T) {
-  if (debug)
-    console.log(msg, value);
-
-  return value;
-}
 
 export function dashCamelCase(camelCase: string) {
   return camelCase.replace(/([A-Z0-9])+/g, function (g) { return "-" + g.toLowerCase(); })
@@ -232,7 +224,7 @@ function keyConvert(key: string, prefix: string = "") {
   switch (firstChar) {
   case "?": return key.replaceAll("?", prefix + " ");
   case " ":
-  case "&": return key;
+  case "&": return key.substring(1);
   case "!": return key.replaceAll("!", prefix + " .");
   default:
     if (prefix && key.substring(0, prefix.length) === prefix)
@@ -241,32 +233,26 @@ function keyConvert(key: string, prefix: string = "") {
   }
 }
 
-function getCssContent(prefix: string, parentKey: string, content: Magic) {
-  {/* console.log("getCssContent", prefix, " - ", parentKey, content); */}
+function getCssContent(parentKey: string, content: Magic) {
   let ret = "";
   let later = "";
-  let realKey = keyConvert(parentKey, prefix);
 
   for (const [key, value] of Object.entries(content[parentKey] ?? {})) {
     if (typeof value === "object") {
       if (key.charAt(0) !== "&" && validPropMap[key])
         continue;
-      const reKey = key.replaceAll(/&/g, realKey);
-      ret += getCssContent(prefix, reKey, { [reKey]: value });
+      const reKey = key.replaceAll(/&/g, parentKey);
+      ret += getCssContent(reKey, { [reKey]: value });
     } else if (value !== undefined)
       later += dashCamelCase(key) + ": " + value.toString() + ";";
   }
 
-  if (prefix && parentKey.substring(0, prefix.length) === prefix)
-    return ret + (later ? parentKey + " {" + later + "}\n" : "");
-
-  return ret + (later ? realKey + " {" + later + "}\n" : "");
+  return ret + (later ? parentKey + " {" + later + "}\n" : "");
 }
 
 (window as any).getCssContent = getCssContent;
 
-function cssTransform(content: Css, camelKey: string, value: MagicValue, reprefix = "") {
-  {/* echo("cssTransform", [dashKey]); */}
+function cssTransform(content: Css, camelKey: string, value: MagicValue) {
   if (!value)
     return;
 
@@ -278,30 +264,28 @@ function cssTransform(content: Css, camelKey: string, value: MagicValue, reprefi
       content[camelKey][key] = spell;
       continue;
     }
-    cssTransform(content[camelKey], keyConvert(key), spell, reprefix);
+    cssTransform(content[camelKey], camelKey + keyConvert(key), spell);
   }
 }
 
 export
-function makeMagic(obj: MagicBook, prefix?: string) {
-  const reprefix = prefix ?? "";
+function makeMagic(obj: MagicBook, prefix: string = "") {
   const style = document.createElement("style");
   let css = "";
 
   let content = {};
 
   for (const [key, value] of Object.entries(obj)) {
-    const ckey = keyConvert(key, reprefix);
+    const ckey = keyConvert(key, prefix);
     if (magic[ckey])
       continue;
-    cssTransform(content, ckey, value, reprefix);
-    css += getCssContent(reprefix, ckey, content);
+    cssTransform(content, ckey, value);
+    css += getCssContent(ckey, content);
   }
 
   if (!css)
     return;
 
-  echo("ADD STYLE\n", css);
   style.appendChild(document.createTextNode(css));
   style.type = "text/css";
   document.head.appendChild(style);
@@ -427,7 +411,7 @@ const baseMagicBook = {
   }),
   sizeVertical: { height: "100%" },
   minSizeVertical: { minHeight: "100%" },
-  sizeVerticalView: { height: "100vh" },
+  sizeVerticalView: { height: "100vh !important" },
   minSizeVerticalView: { minHeight: "100vh" },
   maxSizeVertical: { maxHeight: "100%" },
   sizeHorizontal: { width: "100%" },
@@ -527,11 +511,13 @@ function hexRgb(hex: string) {
   return [r, g, b];
 }
 
+export
 function hexToRGBA(hex: string, alpha = 1) {
   const [r, g, b] = hexRgb(hex);
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
+export
 function colorMix(color0: string, color1: string, alpha = 1) {
   const [r, g, b] = hexRgb(color0);
   const [r1, g1, b1] = hexRgb(color1);
@@ -544,7 +530,6 @@ export function makeThemeMagicBook(theme: Theme, themeName?: string): MagicBook 
   const spacings: OptOctave<any>[] = theme.spacingOct ?? defaultSpacing;
   const fontSizes: OptOctave<any>[] = theme.typography.fontSizeOct ?? defaultFontSize;
   const colors: OptOctave<string>[] = theme.palette.colorOct ?? defaultColor;
-  echo("makeThemeMagicBook", [theme, themeName]);
 
   let dynamic = {};
 
@@ -680,8 +665,8 @@ export function makeThemeMagicBook(theme: Theme, themeName?: string): MagicBook 
       },
     },
     "!MuiTableSortLabel-root": {
-      "&.Mui-active,&:hover,&focus": { color: disabledColor },
-      "&.Mui-active .MuiSvgIcon-root": { color: theme.palette.text.primary },
+      "!Mui-active,&:hover,&:focus": { color: disabledColor },
+      "!Mui-active .MuiSvgIcon-root": { color: theme.palette.text.primary },
     },
     "!MuiCheckbox-root": {
       color: disabledColor + " !important",
@@ -1044,8 +1029,8 @@ const defaultTheme: Theme = {
       active: "#ffaa00",
     },
     common: {
-      white: "white",
-      black: "black",
+      white: "#ffffff",
+      black: "#000000",
     },
     // grey: (new Array(1000)).fill("#aaa"),
   },
@@ -1197,6 +1182,7 @@ class ThemeSub extends Sub<ThemeSubInterface> {
 
 export
 const themeSub = new ThemeSub();
+globalThis.theme = themeSub;
 
 (document.body.parentElement as HTMLElement).className = themeSub._value.name;
 
@@ -1219,17 +1205,43 @@ export function defaultGetTheme(name: string) {
   return themeCache[name];
 }
 
-export function getThemeMagic(themeName: string, getStyle: typeof makeThemeMagicBook, addPrefix: string = "") {
+function _mapClassNames2(ret: { [key: string]: string }, obj: object) {
+  obj = obj ?? {};
+  for (const key of Object.keys(obj)) {
+    const ch = key.charAt(0);
+    switch (ch) {
+    case "?":
+    case "&":
+    case "!":
+      _mapClassNames2(ret, obj[key]);
+      continue;
+    }
+    if (typeof obj[key] !== "object")
+      continue;
+    ret[key] = dashCamelCase(key);
+    _mapClassNames2(ret, obj[key]);
+  }
+}
+
+function mapClassNames(obj: object) {
+  let ret = {};
+  _mapClassNames2(ret, obj);
+  return ret;
+}
+
+export function getThemeMagic(themeName: string, theme: Theme, getStyle: typeof makeThemeMagicBook, addPrefix: string = "") {
   const map = mapByTheme[themeName];
 
   if (map && map.has(getStyle))
     return magic;
 
-  const theme = getTheme(themeName) ?? defaultTheme;
+  const styles = (getStyle ?? makeThemeMagicBook)(theme, themeName);
+  const restyles = addPrefix ? { [addPrefix]: styles } : styles;
+  const classNames = mapClassNames(restyles);
 
   makeMagic(
-    (getStyle ?? makeThemeMagicBook)(theme, themeName),
-    (themeName ? "." + themeName : "") + (addPrefix ? " ." + addPrefix : addPrefix),
+    restyles,
+    (themeName ? "." + themeName : ""),
   );
 
   if (!mapByTheme[themeName]) {
@@ -1238,6 +1250,7 @@ export function getThemeMagic(themeName: string, getStyle: typeof makeThemeMagic
   }
 
   mapByTheme[themeName].set(getStyle, true);
+  return classNames;
 }
 
 export
@@ -1259,16 +1272,17 @@ interface MagicBoxProps extends WithThemeProps {
 export function MagicBox(props: MagicBoxProps) {
   const { Component, getStyle, ...rest } = props;
   const themeName = useThemeName();
-  getThemeMagic(themeName ?? "", getStyle ?? makeThemeMagicBook);
+  const theme = useTheme();
+  getThemeMagic(themeName ?? "", theme, getStyle ?? makeThemeMagicBook);
   return <Component { ...rest } />;
 }
 
 // export this if you need to - to avoid problems with dependency duplication
 // when you have multiple versions of this lib in your node_modules
-export function withMagic(
-  Component: React.ComponentType<WithThemeProps>,
+export function withMagic<T>(
+  Component: React.ComponentType<T&WithThemeProps> | React.ComponentClass<T&WithThemeProps>,
   getStyle?: typeof makeThemeMagicBook,
-): React.ComponentType<WithThemeProps>{
+): React.ComponentType<T&WithThemeProps>{
   return function WithMagicBox(props: WithThemeProps) {
     const { theme, ...rest } = props;
 
@@ -1281,54 +1295,23 @@ export function withMagic(
   };
 }
 
-function _mapClassNames2(ret: { [key: string]: string }, obj: object) {
-  obj = obj ?? {};
-  for (const key of Object.keys(obj)) {
-    const ch = key.charAt(0);
-    switch (ch) {
-    case "?":
-    case "&":
-    case "!":
-      _mapClassNames2(ret, obj[key]);
-      continue;
-    }
-    if (typeof obj[key] !== "object")
-      continue;
-    ret[key] = dashCamelCase(key);
-    _mapClassNames2(ret, obj[key]);
-  }
-}
-
-function mapClassNames(obj: object) {
-  // console.log("mapClassNames", obj);
-  let ret = {};
-  _mapClassNames2(ret, obj);
-  return ret;
-}
-
 export function useMagic(getStyle?: typeof makeThemeMagicBook, addPrefix?: any) {
-  const classNames = useMemo(() => mapClassNames((getStyle ?? makeThemeMagicBook)(defaultTheme)), []);
-
-  useEffect(themeSub.subscribe((sub: ThemeSub) => {
-    getThemeMagic(sub.name, getStyle ?? makeThemeMagicBook, addPrefix);
-  }), [getStyle, addPrefix]);
-
-  return classNames;
+  const theme = useTheme();
+  const themeName = useThemeName();
+  return useMemo(() => getThemeMagic(themeName, theme, getStyle ?? makeThemeMagicBook, addPrefix), [getStyle, addPrefix]);
 }
 
-export function bindMagic(getStyle?: typeof makeThemeMagicBook, addPrefix?: string) {
-  const styles = (getStyle ?? makeThemeMagicBook)(defaultTheme);
-  // console.log("bindMagic", styles);
-  const classNames = mapClassNames(styles);
-  themeSub.subscribe((value: ThemeSub) => getThemeMagic(value.name, getStyle ?? makeThemeMagicBook, addPrefix));
-  return () => classNames;
+export function bindMagic(getStyle?: typeof makeThemeMagicBook, addPrefix: string = "") {
+  return () => useMagic(getStyle, addPrefix);
 }
 
-export function withStyles(getStyle?: typeof makeThemeMagicBook) {
-  const getStyles = bindMagic(getStyle);
+export const makeStyles = bindMagic;
 
-  return function realWithStyles(Component: React.ComponentType<WithClassesProps>) {
-    return function WithClasses(props: object) {
+export function withStyles<T>(getStyle?: typeof makeThemeMagicBook, addPrefix: string = "") {
+  const getStyles = bindMagic(getStyle, addPrefix);
+
+  return function realWithStyles(Component: React.ComponentType<T&WithClassesProps> | React.ComponentClass<T&WithClassesProps>) {
+    return function WithClasses(props: T) {
       const mag = getStyles();
       return <Component classes={mag} { ...props } />;
     };
@@ -1354,7 +1337,7 @@ makeResponsive(el: HTMLElement, name: string, S: number, Sp: number, Op: number,
 
       makeMagic({
         ["sizeHorizontal" + N + capiName]: {
-          width: size + "px",
+          width: size + "px !important",
         },
       });
     }

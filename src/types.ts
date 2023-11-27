@@ -92,7 +92,7 @@ interface WithThemeProps {
 
 export
 interface WithClassesProps {
-  classes: Magic;
+  classes?: Magic;
 }
 
 export type makeMagicType = (mb: MagicBook, prefix?: string) => Magic;
