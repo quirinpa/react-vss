@@ -30,12 +30,12 @@ interface Color {
 }
 
 interface Palette {
-  colorOct: Octave<string>[],
+  colorOct?: Octave<string>[],
   common: {
     white: string;
     black: string;
   };
-  type: string;
+  type?: string;
   primary: Color;
   secondary: Color;
   success: Color;
@@ -57,12 +57,13 @@ interface Palette {
     hoverOpacity: number;
     active: string;
   };
-  grey: string[];
+  // grey: string[];
 }
 
 export interface Theme {
   palette: Palette;
-  spacingOct: OptOctave<string>[];
+  spacingOct?: OptOctave<string>[];
+  spacing?: (...args: number[]) => string;
   typography: {
     htmlFontSize: number;
     fontFamily: string;
