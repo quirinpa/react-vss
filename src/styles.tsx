@@ -641,7 +641,7 @@ export function makeThemeMagicBook(theme: Theme, themeName?: string): MagicBook 
 
   for (const opt of colors) {
     const octave = octaveDefaults(opt, defaultColorOctave);
-    for (let i = octave.min ?? 0; i < octave.length ?? 16; i += 1) {
+    for (let i = octave.min ?? 0; i < octave.length; i += 1) {
       const [label, value] = octave.func(i);
       dynamic["color" + label] = { color: value };
       dynamic["background" + label] = { backgroundColor: value };
